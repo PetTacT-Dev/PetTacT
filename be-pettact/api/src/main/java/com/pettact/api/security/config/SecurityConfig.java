@@ -96,7 +96,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/v1/product/create").hasAuthority("ROLE_SELLER")
                 .requestMatchers(HttpMethod.PUT, "/v1/product/update/*").hasAuthority("ROLE_SELLER")
                 .requestMatchers(HttpMethod.POST, "/v1/product/delete/*").hasAuthority("ROLE_SELLER")
-                .requestMatchers("/v1/board-categories").hasAuthority("ROLE_ADMIN")
+//                .requestMatchers("/v1/board-categories").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/v1/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.POST, "/v1/payments/**").permitAll()	// TODO: 결제 인증 해결
                 .requestMatchers("/files/**").permitAll()	// TODO: 결제 인증 해결
