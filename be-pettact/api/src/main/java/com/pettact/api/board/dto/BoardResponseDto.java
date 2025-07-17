@@ -28,8 +28,12 @@ public class BoardResponseDto {
     private Boolean isDeleted;
     private LocalDateTime deletedAt;
     private List<ReplyResponseDto> replies = new ArrayList<>();
-    private int recommendCount;
+    private int boardRecommendCount;
+    private int totalReplyCount;
+    private int boardViewCnt;
     private List<FileDto> files;
+    private List<ReplyResponseDto> topReplies;
+    private List<ReplyResponseDto> normalReplies;
 
 
     public static BoardResponseDto fromEntity(Board savedBoard) {
@@ -46,6 +50,10 @@ public class BoardResponseDto {
                 savedBoard.getDeletedAt(),
                 new ArrayList<>(),
                 0,
+                0,
+                savedBoard.getBoardViewCnt(),
+                new ArrayList<>(),
+                new ArrayList<>(),
                 new ArrayList<>()
         );
     }
@@ -64,6 +72,10 @@ public class BoardResponseDto {
                 board.getDeletedAt(),
                 null,
                 0,
+                0,
+                board.getBoardViewCnt(),
+                new ArrayList<>(),
+                new ArrayList<>(),
                 new ArrayList<>()
         );
     }

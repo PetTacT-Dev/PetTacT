@@ -18,10 +18,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 // 구분할지 말지
 
@@ -38,14 +37,6 @@ public class BoardController {
      * POST /v1/board
      * 게시글 생성
      */
-//
-//    @PostMapping
-//    public ResponseEntity<BoardResponseDto> createBoard(@RequestBody BoardCreateDto boardCreateDto,
-//                                                        @AuthenticationPrincipal CustomUserDetails userDetails) {
-//        Long userNo = userDetails.getUserEntity().getUserNo();
-//        BoardResponseDto boardResponseDto = boardService.createBoard(boardCreateDto, userNo);
-//        return ResponseEntity.ok(boardResponseDto);
-//    }
 
     @PostMapping
     public ResponseEntity<BoardResponseDto> createBoard(
@@ -55,10 +46,8 @@ public class BoardController {
     ) {
         Long userNo = userDetails.getUserEntity().getUserNo();
 
-        // 1. 게시글 생성
         BoardResponseDto boardResponse = boardService.createBoard(boardCreateDto, userNo);
 
-        // 2. 파일이 있으면 업로드
         if (files != null && files.length > 0) {
             List<FileDto> uploadedFiles = multiFileService.createFiles(
                     File.ReferenceTable.BOARD,
@@ -72,9 +61,20 @@ public class BoardController {
         return ResponseEntity.status(HttpStatus.CREATED).body(boardResponse);
     }
 
+    @GetMapping("/main/popular-community")
+    public List<BoardResponseDto> getPopularBoardsForMain() {
+        List<BoardResponseDto> allBoards = boardService.getAllBoard();
+
+        return allBoards.stream()
+                .filter(dto -> dto.getBoardRecommendCount() >= 1 || dto.getTotalReplyCount() >= 1)
+                .sorted(Comparator.comparing(BoardResponseDto::getTotalReplyCount).reversed())
+                .limit(5)
+                .collect(Collectors.toList());
+    }
+
     /*
      * GET /v1/board
-     * 게시긒 목록 조회
+     * 게시글 목록 조회
      */
 
     @GetMapping
@@ -82,6 +82,7 @@ public class BoardController {
         List<BoardResponseDto> boards = boardService.getAllBoard();
         return ResponseEntity.ok(boards);
     }
+
 
     /*
      * GET v1/board/{boardNo}
