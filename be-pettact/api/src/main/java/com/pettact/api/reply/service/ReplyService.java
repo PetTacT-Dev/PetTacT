@@ -16,6 +16,10 @@ import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +27,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -108,49 +114,55 @@ public class ReplyService {
     }
 
 
-    public List<ReplyResponseDto> getAllReplies(Long boardNo) {
+    public Page<ReplyResponseDto> getAllReplies(Long boardNo, Pageable pageable) {
         boardRepository.findById(boardNo)
-                .orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+
         List<Reply> replies = replyRepository.findRepliesByBoardNo(boardNo);
-        return buildHierarchy(replies);
+        List<ReplyResponseDto> hierarchyReplies = buildHierarchy(replies);
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), hierarchyReplies.size());
+        List<ReplyResponseDto> pageContent = hierarchyReplies.subList(start, end);
+
+        return new PageImpl<>(pageContent, pageable, hierarchyReplies.size());
     }
 
-    /**
-     * 댓글 리스트를 계층구조로 변환
-     */
-    private List<ReplyResponseDto> buildHierarchy(List<Reply> replies) {
-        Map<Long, ReplyResponseDto> replyMap = new HashMap<>();
-        List<ReplyResponseDto> rootReplies = new ArrayList<>();
 
-        // 모든 댓글을 DTO로 변환하여 Map에 저장
+    /**
+         * 댓글 리스트를 계층구조로 변환
+         */
+    private List<ReplyResponseDto> buildHierarchy(List<Reply> replies) {
+        List<ReplyResponseDto> allReplies = new ArrayList<>();
+
         for (Reply reply : replies) {
             ReplyResponseDto dto = ReplyResponseDto.fromEntity(reply);
 
-            // 댓글 추천수 설정 추가!
+            // 댓글 추천수 설정
             int recommendCount = replyRecommendRepository.countByReplyNo(reply.getReplyNo());
             dto.setRecommendCount(recommendCount);
 
-            replyMap.put(reply.getReplyNo(), dto);
-        }
-
-        // 계층구조 구성
-        for (Reply reply : replies) {
-            ReplyResponseDto dto = replyMap.get(reply.getReplyNo());
-
+            // depth 설정
             if (reply.getParentReply() == null) {
-                // 최상위 댓글 (부모가 없는 댓글)
-                rootReplies.add(dto);
+                dto.setDepth(0);
             } else {
-                // 대댓글 (부모 댓글의 childReplies에 추가)
-                Long parentId = reply.getParentReply().getReplyNo();
-                ReplyResponseDto parent = replyMap.get(parentId);
-                if (parent != null) {
-                    parent.getChildReplies().add(dto);
-                }
+                // 부모의 depth + 1 (간단하게 1로 설정)
+                dto.setDepth(1);
             }
+
+            allReplies.add(dto);
         }
 
-        return rootReplies;
+        // 최상위 댓글 먼저, 그 다음 대댓글 순으로 정렬
+        allReplies.sort((a, b) -> {
+            if (a.getDepth() == 0 && b.getDepth() == 0) {
+                return a.getCreatedAt().compareTo(b.getCreatedAt());
+            }
+            return Integer.compare(a.getDepth(), b.getDepth());
+        });
+
+        return allReplies;
     }
 
     @Transactional
@@ -186,4 +198,24 @@ public class ReplyService {
     }
 
 
+    public List<ReplyResponseDto> getPopularReplies(Long boardNo, int limit) {
+        Pageable pageable = PageRequest.of(0, limit * 2);
+        List<Reply> popularReplies = replyRepository.findPopularRepliesByBoardNo(boardNo, pageable);
+
+        return popularReplies.stream()
+                .map(reply -> {
+                    ReplyResponseDto dto = ReplyResponseDto.fromEntity(reply);
+                    int recommendCount = replyRecommendRepository.countByReplyNo(reply.getReplyNo());
+                    dto.setRecommendCount(recommendCount);
+                    dto.setDepth(0);
+                    return dto;
+                })
+                .filter(dto -> dto.getRecommendCount() >= 1)
+                .limit(limit) // 실제 인기 댓글 수만큼 자르기
+                .collect(Collectors.toList());
+    }
+
+    public int countByBoardNo(Long boardNo) {
+        return replyRepository.countByBoardNo(boardNo);
+    }
 }
