@@ -19,7 +19,7 @@ public class AdminReportListDTO {
     private Long userNo;
     private String userEmail;
     private String userNickname;
-    private String reportReason;
+    private Report.ReportReason reportReason;
     private Integer reportStatus;
     private LocalDateTime createdAt;
 

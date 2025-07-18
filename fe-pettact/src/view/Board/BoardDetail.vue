@@ -29,9 +29,9 @@
             <div class="meta-left">
               <span class="author">작성자: {{ board.userNickname || '익명' }}</span>
               <span class="date">{{ formatDate(board.createdAt) }}</span>
-              <span class="views">조회수: {{ board.viewCount || 0 }}</span>
+              <div class="col-views">{{ board.boardViewCnt || 0 }}</div>
             </div>
-            <!-- 작성자인 경우 수정/삭제 버튼 -->
+            <!-- 작성자인 경우 수정/삭제 /신고 버튼 -->
             <div v-if="isAuthor" class="action-buttons">
               <button @click="editPost" class="btn btn-edit">
                 ✏️ 수정하기
@@ -39,6 +39,7 @@
               <button @click="deletePost" class="btn btn-delete">
                 🗑️ 삭제하기
               </button>
+              <button @click="openReportModal" class="report-btn">🚨 신고하기</button>
             </div>
           </div>
         </div>
@@ -48,6 +49,31 @@
           <div class="content-text">
             {{ board.boardContent }}
           </div>
+
+          <!-- 게시글 추천 버튼 --> 
+        <div class="board-recommend" v-if="categoryInfo.allowRecommend">
+        <div class="recommend-count">
+            👍 {{ board?.boardRecommendCount || 0 }}개
+        </div>
+        <button 
+            @click="toggleRecommend" 
+            :class="['recommend-btn', { active: isRecommended }]"
+            :disabled="isRecommending"
+        >
+        <span v-if="!isRecommending">
+        {{ isRecommended ? '👍 추천 취소' : '👍 추천하기' }}
+        </span>
+        <span v-else>처리중...</span>
+        </button>
+    </div>
+
+    <!-- ✅ 추천 비허용 시 메시지 (선택사항) -->
+    <div class="board-recommend-disabled" v-else>
+        <div class="recommend-count">
+        👍 {{ board?.boardRecommendCount || 0 }}개
+        </div>
+        <p class="disabled-message">이 게시판은 추천 기능이 비활성화되어 있습니다.</p>
+    </div>
 
           <!-- 첨부 이미지들 -->
           <div v-if="attachedImages.length > 0" class="attached-images">
@@ -82,13 +108,12 @@
                   <span class="file-name">{{ file.fileName }}</span>
                   <span class="file-size">({{ formatFileSize(file.fileSize) }})</span>
                 </div>
-                <a 
-                  :href="`/v1/multifile/download/${file.fileNo}`" 
-                  class="download-btn"
-                  download
+                <button 
+                    @click="downloadFile(file.fileNo, file.fileName)"
+                    class="download-btn"
                 >
                   다운로드
-                </a>
+                </button>
               </div>
             </div>
           </div>
@@ -96,142 +121,13 @@
       </div>
 
       <!-- 댓글 섹션 -->
-      <div class="comments-section">
-        <!-- 댓글 작성 -->
-        <div class="comment-form-container">
-          <h3>댓글 작성</h3>
-          <div v-if="userStore.user" class="comment-form">
-            <div class="comment-input-wrapper">
-              <textarea
-                v-model="newComment"
-                placeholder="댓글을 입력하세요..."
-                class="comment-input"
-                rows="3"
-                maxlength="1000"
-              ></textarea>
-              <div class="comment-actions">
-                <span class="char-count">{{ newComment.length }}/1000</span>
-                <button 
-                  @click="submitComment" 
-                  :disabled="!newComment.trim() || isSubmittingComment"
-                  class="btn btn-primary btn-sm"
-                >
-                  <span v-if="isSubmittingComment">등록 중...</span>
-                  <span v-else>댓글 등록</span>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div v-else class="login-required">
-            <p>댓글을 작성하려면 <router-link to="/login" class="login-link">로그인</router-link>이 필요합니다.</p>
-          </div>
+        <div class="reply-section">
+            <h3>댓글</h3>
+            <ReplyItem 
+            :boardNo="board.boardNo" 
+            :allowReply="board.responseDto.boardAllowReply" 
+        />
         </div>
-
-        <!-- 댓글 목록 -->
-        <div class="comments-container">
-          <div class="comments-header">
-            <h3>댓글 {{ replies.length }}개</h3>
-            <div class="sort-options">
-              <button 
-                @click="sortType = 'latest'" 
-                :class="{ active: sortType === 'latest' }"
-                class="sort-btn"
-              >
-                최신순
-              </button>
-              <button 
-                @click="sortType = 'oldest'" 
-                :class="{ active: sortType === 'oldest' }"
-                class="sort-btn"
-              >
-                등록순
-              </button>
-            </div>
-          </div>
-
-          <!-- 댓글 로딩 -->
-          <div v-if="loadingComments" class="comments-loading">
-            <p>댓글을 불러오는 중...</p>
-          </div>
-
-          <!-- 댓글 없음 -->
-          <div v-else-if="sortedReplies.length === 0" class="no-comments">
-            <p>아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!</p>
-          </div>
-
-          <!-- 댓글 리스트 -->
-          <div v-else class="comments-list">
-            <div 
-              v-for="reply in sortedReplies" 
-              :key="reply.replyNo"
-              class="comment-item"
-            >
-              <div class="comment-content">
-                <div class="comment-header">
-                  <div class="comment-author">
-                    <span class="author-name">{{ reply.userNickname }}</span>
-                    <span class="comment-date">{{ formatDate(reply.createdAt) }}</span>
-                  </div>
-                  <div class="comment-actions">
-                    <button 
-                      v-if="userStore.user"
-                      @click="startReplyComment(reply)"
-                      class="action-btn reply-btn"
-                    >
-                      답글
-                    </button>
-                    <button 
-                      v-if="isCommentAuthor(reply)"
-                      @click="startEditComment(reply)"
-                      class="action-btn edit-btn"
-                    >
-                      수정
-                    </button>
-                    <button 
-                      v-if="isCommentAuthor(reply)"
-                      @click="deleteComment(reply.replyNo)"
-                      class="action-btn delete-btn"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                </div>
-
-                <!-- 댓글 내용 (읽기 모드) -->
-                <div v-if="editingCommentId !== reply.replyNo" class="comment-text">
-                  {{ reply.replyContent }}
-                </div>
-
-                <!-- 댓글 수정 폼 -->
-                <div v-else class="comment-edit-form">
-                  <textarea
-                    v-model="editingCommentContent"
-                    class="edit-input"
-                    rows="3"
-                    maxlength="1000"
-                  ></textarea>
-                  <div class="edit-actions">
-                    <button 
-                      @click="cancelEditComment"
-                      class="btn btn-secondary btn-sm"
-                    >
-                      취소
-                    </button>
-                    <button 
-                      @click="updateComment(reply.replyNo)"
-                      :disabled="!editingCommentContent.trim() || isUpdatingComment"
-                      class="btn btn-primary btn-sm"
-                    >
-                      <span v-if="isUpdatingComment">수정 중...</span>
-                      <span v-else>수정 완료</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- 오류 상태 -->
@@ -280,87 +176,29 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import axios from 'axios'
-
-// CommentItem 컴포넌트 정의
-const CommentItem = {
-  name: 'CommentItem',
-  props: {
-    reply: Object,
-    userStore: Object,
-    editingCommentId: Number,
-    editingCommentContent: String,
-    isUpdatingComment: Boolean,
-    replyingToId: Number,
-    replyContent: String,
-    isSubmittingReply: Boolean,
-    depth: {
-      type: Number,
-      default: 0
-    }
-  },
-  emits: ['edit', 'delete', 'reply', 'update', 'cancel-edit', 'submit-reply', 'cancel-reply'],
-  setup(props, { emit }) {
-    const isCommentAuthor = computed(() => {
-      if (!props.userStore.user) return false
-      return props.reply.userNo === props.userStore.user.userNo
-    })
-
-    const formatDate = (dateString) => {
-      if (!dateString) return ''
-      
-      const date = new Date(dateString)
-      const now = new Date()
-      const diffMs = now - date
-      const diffMins = Math.floor(diffMs / 60000)
-      const diffHours = Math.floor(diffMs / 3600000)
-      const diffDays = Math.floor(diffMs / 86400000)
-      
-      if (diffMins < 1) return '방금 전'
-      if (diffMins < 60) return `${diffMins}분 전`
-      if (diffHours < 24) return `${diffHours}시간 전`
-      if (diffDays < 7) return `${diffDays}일 전`
-      
-      return date.toLocaleString('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    }
-
-    return {
-      isCommentAuthor,
-      formatDate
-    }
-  },
-}
+import ReplyItem from '@/view/reply/ReplyItem.vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 
-// 반응형 데이터
+// 게시글 관련 데이터
 const board = ref(null)
 const categoryInfo = ref({ title: '게시판' })
 const attachedImages = ref([])
 const attachedFiles = ref([])
-const replies = ref([])
 const loading = ref(true)
-const loadingComments = ref(true)
+
+// 이미지 모달 관련
 const showImageModal = ref(false)
 const currentImageIndex = ref(0)
 
-// 댓글 관련 데이터
-const newComment = ref('')
-const isSubmittingComment = ref(false)
-const sortType = ref('latest')
-const editingCommentId = ref(null)
-const editingCommentContent = ref('')
-const isUpdatingComment = ref(false)
-const replyingToId = ref(null)
-const replyContent = ref('')
-const isSubmittingReply = ref(false)
+// 게시글 추천 관련
+const isRecommended = ref(false)
+const isRecommending = ref(false)
+
+// boardNo를 숫자로 변환
+const boardNo = computed(() => route.params.boardNo)
 
 // 작성자 권한 체크
 const isAuthor = computed(() => {
@@ -368,45 +206,59 @@ const isAuthor = computed(() => {
   return board.value.userNo === userStore.user.userNo
 })
 
-// 댓글 작성자 권한 체크
-const isCommentAuthor = (reply) => {
-  if (!userStore.user) return false
-  return reply.userNo === userStore.user.userNo
+
+const checkRecommendStatus = async () => {
+    if (!categoryInfo.value.allowRecommend) {
+    isRecommended.value = false
+    return
+  }
+
+  if (!userStore.isLoggedIn) {
+    isRecommended.value = false
+    return
+  }
+
+  try {
+    const response = await axios.get(`/v1/board/${boardNo.value}/recommend`)
+    isRecommended.value = response.data
+  } catch (error) {
+    console.error('추천 상태 확인 실패:', error)
+    isRecommended.value = false
+  }
 }
 
-// 정렬된 댓글 목록
-const sortedReplies = computed(() => {
-  const sorted = [...replies.value]
-  if (sortType.value === 'latest') {
-    return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-  } else {
-    return sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-  }
-})
-
-// 게시글 상세 정보 로드
+// loadBoardDetail 함수 수정
 const loadBoardDetail = async () => {
   try {
     loading.value = true
-    const boardNo = route.params.boardNo
+    const boardNoParam = route.params.boardNo
 
-    // 1. 게시글 정보 조회
-    const boardResponse = await axios.get(`/v1/board/${boardNo}`)
+    // 게시글 정보 조회
+    const boardResponse = await axios.get(`/v1/board/${boardNoParam}`)
+    console.log('전체 게시글 데이터:', boardResponse.data)
+    console.log('responseDto 내용:', boardResponse.data.responseDto)
     board.value = boardResponse.data
 
-    // 2. 카테고리 정보 조회
-    if (board.value.categoryNo) {
-      const categoryResponse = await axios.get(`/v1/board-categories/${board.value.categoryNo}`)
+    // responseDto에서 카테고리 정보 직접 사용
+    if (boardResponse.data.responseDto) {
+      const categoryData = boardResponse.data.responseDto
+      
+      console.log('boardAllowRecommend:', categoryData.boardAllowRecommend)
+      console.log('boardCategoryNo:', categoryData.boardCategoryNo)
+      
       categoryInfo.value = {
-        title: categoryResponse.data.boardCategoryTitle || '게시판'
+        title: categoryData.boardCategoryTitle || '게시판',
+        allowRecommend: categoryData.boardAllowRecommend || false
       }
+      
+      console.log('설정된 categoryInfo:', categoryInfo.value)
     }
 
-    // 3. 첨부파일 조회
-    await loadBoardFiles(boardNo)
-
-    // 4. 댓글 조회
-    await loadComments(boardNo)
+    // 첨부파일 조회
+    await loadBoardFiles(boardNoParam)
+    
+    // 추천 상태 확인 추가
+    await checkRecommendStatus()
 
   } catch (error) {
     console.error('게시글 로드 실패:', error)
@@ -453,148 +305,25 @@ const loadBoardFiles = async (boardNo) => {
   }
 }
 
-// 댓글 목록 로드
-const loadComments = async (boardNo) => {
+// 파일 다운로드 함수 추가
+const downloadFile = async (fileNo, fileName) => {
   try {
-    loadingComments.value = true
-    const response = await axios.get(`/v1/board/${boardNo}/replies`)
-    console.log('📝 댓글 API 응답:', response.data) // 디버깅용
-    replies.value = response.data || []
-    console.log('📝 저장된 댓글:', replies.value) // 디버깅용
-  } catch (error) {
-    console.error('댓글 로드 실패:', error)
-    replies.value = []
-  } finally {
-    loadingComments.value = false
-  }
-}
-
-// 댓글 작성
-const submitComment = async () => {
-  if (!newComment.value.trim() || isSubmittingComment.value) return
-
-  try {
-    isSubmittingComment.value = true
-    const boardNo = route.params.boardNo
-
-    const commentData = {
-      content: newComment.value.trim(),
-      parentReplyNo: null  // 일반 댓글은 부모가 없음
-    }
-
-    console.log('전송할 댓글 데이터:', commentData)
-
-    const response = await axios.post(`/v1/board/${boardNo}/replies`, commentData)
+    const response = await axios.get(`/v1/multifile/download/${fileNo}`, {
+      responseType: 'blob'
+    })
     
-    // 댓글 목록 새로고침 (계층구조를 위해)
-    await loadComments(boardNo)
-    newComment.value = ''
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', fileName)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
     
   } catch (error) {
-    console.error('댓글 작성 실패:', error)
-    console.log('에러 응답:', error.response?.data)
-    alert('댓글 작성에 실패했습니다.')
-  } finally {
-    isSubmittingComment.value = false
-  }
-}
-
-// 댓글 수정 시작
-const startEditComment = (reply) => {
-  editingCommentId.value = reply.replyNo
-  editingCommentContent.value = reply.content || reply.replyContent || '' // 기본값 설정
-}
-
-// 댓글 수정 취소
-const cancelEditComment = () => {
-  editingCommentId.value = null
-  editingCommentContent.value = ''
-}
-
-// 답글 시작
-const startReplyComment = (reply) => {
-  console.log('답글 시작:', reply) // 디버깅용
-  replyingToId.value = reply.replyNo
-  replyContent.value = ''
-}
-
-// 답글 취소
-const cancelReplyComment = () => {
-  replyingToId.value = null
-  replyContent.value = ''
-}
-
-// 답글 작성
-const submitReply = async (parentReplyNo, content) => {
-  if (!content.trim() || isSubmittingReply.value) return
-
-  try {
-    isSubmittingReply.value = true
-    const boardNo = route.params.boardNo
-
-    const replyData = {
-      content: content.trim(),
-      parentReplyNo: parentReplyNo  // 부모 댓글 번호
-    }
-
-    const response = await axios.post(`/v1/board/${boardNo}/replies`, replyData)
-    
-    // 댓글 목록 새로고침
-    await loadComments(boardNo)
-    
-    // 답글 작성 모드 종료
-    replyingToId.value = null
-    replyContent.value = ''
-    
-  } catch (error) {
-    console.error('답글 작성 실패:', error)
-    alert('답글 작성에 실패했습니다.')
-  } finally {
-    isSubmittingReply.value = false
-  }
-}
-
-// 댓글 수정
-const updateComment = async (replyNo) => {
-  if (!editingCommentContent.value || !editingCommentContent.value.trim() || isUpdatingComment.value) return
-
-  try {
-    isUpdatingComment.value = true
-
-    const updateData = {
-      content: editingCommentContent.value.trim()
-    }
-
-    const response = await axios.patch(`/v1/replies/${replyNo}`, updateData)
-    
-    // 댓글 목록 새로고침 (계층구조 유지를 위해)
-    await loadComments(route.params.boardNo)
-    
-    // 수정 모드 종료
-    editingCommentId.value = null
-    editingCommentContent.value = ''
-    
-  } catch (error) {
-    console.error('댓글 수정 실패:', error)
-    alert('댓글 수정에 실패했습니다.')
-  } finally {
-    isUpdatingComment.value = false
-  }
-}
-
-// 댓글 삭제
-const deleteComment = async (replyNo) => {
-  if (!confirm('이 댓글을 삭제하시겠습니까?')) return
-
-  try {
-    await axios.delete(`/v1/replies/${replyNo}`)
-    
-    // 댓글 목록 새로고침 (계층구조 유지를 위해)
-    await loadComments(route.params.boardNo)
-    
-  } catch (error) {
-    console.error('댓글 삭제 실패:', error)
-    alert('댓글 삭제에 실패했습니다.')
+    console.error('다운로드 실패:', error)
+    alert('파일 다운로드에 실패했습니다.')
   }
 }
 
@@ -669,8 +398,8 @@ const goToBoard = () => {
 
 // 게시글 수정
 const editPost = () => {
-  const boardNo = route.params.boardNo
-  router.push(`/board/${boardNo}/edit`)
+  const boardNoParam = route.params.boardNo
+  router.push(`/board/${boardNoParam}/edit`)
 }
 
 // 게시글 삭제
@@ -680,8 +409,8 @@ const deletePost = async () => {
   }
 
   try {
-    const boardNo = route.params.boardNo
-    await axios.delete(`/v1/board/${boardNo}`)
+    const boardNoParam = route.params.boardNo
+    await axios.delete(`/v1/board/${boardNoParam}`)
     
     alert('게시글이 삭제되었습니다.')
     goToBoard()
@@ -691,8 +420,49 @@ const deletePost = async () => {
   }
 }
 
+const toggleRecommend = async () => {
+
+    if (!categoryInfo.value.allowRecommend) {
+    alert('이 게시판은 추천 기능이 비활성화되어 있습니다.')
+    return
+  }
+
+  const isUserLoggedIn = userStore.user && localStorage.getItem('accessToken')
+  
+  if (!isUserLoggedIn) {
+    alert('로그인이 필요한 기능입니다.')
+    return
+  }
+
+  isRecommending.value = true
+
+  try {
+    if (isRecommended.value) {
+      // 추천 취소
+      await axios.delete(`/v1/board/${boardNo.value}/recommend`)
+      isRecommended.value = false
+      // 카운트 수동 업데이트
+      if (board.value.boardRecommendCount > 0) {
+        board.value.boardRecommendCount--
+      }
+    } else {
+      // 추천 하기
+      await axios.post(`/v1/board/${boardNo.value}/recommend`)
+      isRecommended.value = true
+      // 카운트 수동 업데이트
+      board.value.boardRecommendCount++
+    }
+  } catch (err) {
+    console.error('추천 토글 실패:', err)
+    alert('추천 처리 중 오류가 발생했습니다.')
+  } finally {
+    isRecommending.value = false
+  }
+}
+
 // 초기 로드
 onMounted(() => {
+    console.log('=== 컴포넌트 마운트 시작 ===')
   loadBoardDetail()
 })
 </script>
@@ -887,370 +657,6 @@ onMounted(() => {
 
 .download-btn:hover {
   background: #0056b3;
-}
-
-/* 댓글 섹션 */
-.comments-section {
-  background: white;
-  margin: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-  overflow: hidden;
-}
-
-.comment-form-container {
-  padding: 30px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.comment-form-container h3 {
-  margin: 0 0 20px 0;
-  color: #2c3e50;
-  font-size: 20px;
-}
-
-.comment-input-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.comment-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 14px;
-  resize: vertical;
-  transition: border-color 0.2s;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.comment-input:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.comment-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.char-count {
-  font-size: 12px;
-  color: #6c757d;
-}
-
-.login-required {
-  text-align: center;
-  padding: 20px;
-  color: #6c757d;
-}
-
-.login-link {
-  color: #007bff;
-  text-decoration: none;
-}
-
-.login-link:hover {
-  text-decoration: underline;
-}
-
-.comments-container {
-  padding: 30px;
-}
-
-.comments-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.comments-header h3 {
-  margin: 0;
-  color: #2c3e50;
-  font-size: 18px;
-}
-
-.sort-options {
-  display: flex;
-  gap: 10px;
-}
-
-.sort-btn {
-  background: none;
-  border: 1px solid #e9ecef;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.sort-btn.active,
-.sort-btn:hover {
-  background: #007bff;
-  color: white;
-  border-color: #007bff;
-}
-
-.comments-loading,
-.no-comments {
-  text-align: center;
-  padding: 40px 20px;
-  color: #6c757d;
-}
-
-.comments-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.comment-item {
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.comment-content {
-  padding: 20px;
-}
-
-.comment-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.comment-author {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.author-name {
-  font-weight: 500;
-  color: #2c3e50;
-}
-
-.comment-date {
-  font-size: 12px;
-  color: #6c757d;
-}
-
-.comment-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  background: none;
-  border: none;
-  font-size: 12px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.edit-btn {
-  color: #28a745;
-}
-
-.edit-btn:hover {
-  background: #e8f5e8;
-}
-
-.delete-btn {
-  color: #dc3545;
-}
-
-.delete-btn:hover {
-  background: #f8e8e8;
-}
-
-.comment-text {
-  color: #495057;
-  line-height: 1.5;
-  white-space: pre-wrap;
-}
-
-.comment-edit-form {
-  margin-top: 10px;
-}
-
-.edit-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 14px;
-  resize: vertical;
-  transition: border-color 0.2s;
-  font-family: inherit;
-  box-sizing: border-box;
-  margin-bottom: 10px;
-}
-
-.edit-input:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.child-comment {
-  border-left: 3px solid #e9ecef;
-  background: #f8f9fa;
-}
-
-.reply-indicator {
-  color: #6c757d;
-  font-size: 12px;
-  margin-left: 5px;
-}
-
-.reply-btn {
-  color: #007bff;
-}
-
-.reply-btn:hover {
-  background: #e3f2fd;
-}
-
-.reply-form {
-  margin-top: 15px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-}
-
-.reply-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 14px;
-  resize: vertical;
-  transition: border-color 0.2s;
-  font-family: inherit;
-  box-sizing: border-box;
-  margin-bottom: 10px;
-}
-
-.reply-input:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.reply-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.reply-btn {
-  color: #007bff;
-}
-
-.reply-btn:hover {
-  background: #e3f2fd;
-}
-
-.reply-form {
-  margin-top: 15px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-}
-
-.reply-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 14px;
-  resize: vertical;
-  transition: border-color 0.2s;
-  font-family: inherit;
-  box-sizing: border-box;
-  margin-bottom: 10px;
-}
-
-.reply-input:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.reply-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.btn-primary {
-  background: #007bff;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #0056b3;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #545b62;
-}
-
-.btn-edit {
-  background: #28a745;
-  color: white;
-}
-
-.btn-edit:hover {
-  background: #218838;
-}
-
-.btn-delete {
-  background: #dc3545;
-  color: white;
-}
-
-.btn-delete:hover {
-  background: #c82333;
-}
-
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 12px;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 /* 이미지 모달 */

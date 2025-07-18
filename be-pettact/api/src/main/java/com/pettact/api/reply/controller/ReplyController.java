@@ -5,6 +5,9 @@ import com.pettact.api.reply.dto.ReplyResponseDto;
 import com.pettact.api.reply.service.ReplyService;
 import com.pettact.api.security.vo.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -39,9 +42,26 @@ public class ReplyController {
      */
 
     @GetMapping("/board/{boardNo}/replies")
-    public ResponseEntity<List<ReplyResponseDto>> getAllReplies(@PathVariable Long boardNo) {
-        List<ReplyResponseDto> responseDtos = replyService.getAllReplies(boardNo);
+    public ResponseEntity<Page<ReplyResponseDto>> getAllReplies
+    (@PathVariable("boardNo") Long boardNo,
+     @RequestParam(name = "page", defaultValue = "0") int page,
+     @RequestParam(name = "size", defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ReplyResponseDto> responseDtos = replyService.getAllReplies(boardNo, pageable);
         return ResponseEntity.ok(responseDtos);
+    }
+
+    /*
+     * GET /v1/board/{boardNo}/popular
+     * 인기 댓글 조회
+     */
+    @GetMapping("/board/{boardNo}/replies/popular")
+    public ResponseEntity<List<ReplyResponseDto>> getPopularReplies(@PathVariable("boardNo") Long boardNo,
+                                                                    @RequestParam(defaultValue = "3") int limit) {
+        List<ReplyResponseDto> popularReplies = replyService.getPopularReplies(boardNo, limit);
+        return ResponseEntity.ok(popularReplies);
+
     }
 
     /*

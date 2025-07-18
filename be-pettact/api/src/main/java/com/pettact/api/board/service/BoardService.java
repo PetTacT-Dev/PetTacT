@@ -12,6 +12,9 @@ import com.pettact.api.file.dto.FileDto;
 import com.pettact.api.file.entity.File;
 import com.pettact.api.file.service.MultiFileService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 import com.pettact.api.recommend.boardRecommend.repository.BoardRecommendRepository;
 import com.pettact.api.reply.dto.ReplyResponseDto;
@@ -20,7 +23,6 @@ import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.repository.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +50,7 @@ public class BoardService implements ViewCountSyncable<Long> {
     @Autowired
     private MultiFileService multiFileService;
 
+
     @Transactional
     public BoardResponseDto createBoard(BoardCreateDto boardCreateDto,  Long userNo) {
         Users users = userRepository.findById(userNo)
@@ -59,12 +62,28 @@ public class BoardService implements ViewCountSyncable<Long> {
         Board savedBoard = boardRepository.save(board);
         return BoardResponseDto.fromEntity(savedBoard);
     }
+
     public List<BoardResponseDto> getAllBoard() {
         List<Board> boards = boardRepository.findAll();
         return boards.stream()
-                .map(BoardResponseDto::getAllBoard)
+                .map(board -> {
+                    BoardResponseDto dto = BoardResponseDto.getAllBoard(board);
+
+                    // 댓글 수 설정
+                    int replyCount = replyService.countByBoardNo(board.getBoardNo());
+                    System.out.println("Board " + board.getBoardNo() + " 댓글 수: " + replyCount);
+                    dto.setTotalReplyCount(replyCount);
+
+                    // 게시글 추천 수 설정
+                    int recommendCount = boardRecommendRepository.countByBoardNo(board.getBoardNo());
+                    dto.setBoardRecommendCount(recommendCount);
+
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
     public BoardResponseDto getBoardByNo(Long boardNo, String sessionId) {
         Board board = boardRepository.findById(boardNo)
                 .orElseThrow(() -> new IllegalArgumentException("게시글 정보를 찾을 수 없습니다. No: " + boardNo));
@@ -73,25 +92,39 @@ public class BoardService implements ViewCountSyncable<Long> {
             viewCountService.increaseViewCount("board", boardNo, 120);
             redisTemplate.opsForValue().set(preventKey, "1", Duration.ofMinutes(60));
         }
-        
-        List<ReplyResponseDto> replyList = replyService.getAllReplies(boardNo);
+
+        // 게시글 엔티티에서 조회수 가져오고, Redis에 누적된 조회수를 더함
+        String redisKey = "board:views:" + boardNo;
+        String redisCountStr = redisTemplate.opsForValue().get(redisKey);
+        int redisCount = (redisCountStr != null) ? Integer.parseInt(redisCountStr) : 0;
+
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<ReplyResponseDto> replyPage = replyService.getAllReplies(boardNo, pageable);
+        List<ReplyResponseDto> replyList = replyPage.getContent();
+
+        // 인기 댓글
+        List<ReplyResponseDto> topReplies = replyList.stream()
+                .filter(reply -> reply.getRecommendCount() >= 1)
+                .limit(4)
+                .collect(Collectors.toList());
+
+        List<ReplyResponseDto> normalReplies = replyList.stream()
+                .filter(reply -> reply.getRecommendCount() < 1)
+                .collect(Collectors.toList());
+
         int recommendCount = boardRecommendRepository.countByBoardNo(boardNo);
         BoardResponseDto boardResponseDto = BoardResponseDto.fromEntity(board);
-        boardResponseDto.setReplies(replyList);
-        boardResponseDto.setRecommendCount(recommendCount);
+        // DTO에 합산된 조회수 설정
+        boardResponseDto.setBoardViewCnt(board.getBoardViewCnt() + redisCount);
+
+        // 인기 댓글과 일반 댓글을 분리해서 설정
+        boardResponseDto.setTopReplies(topReplies);      // 인기 댓글
+        boardResponseDto.setNormalReplies(normalReplies); // 일반 댓글
+        boardResponseDto.setBoardRecommendCount(recommendCount);
+
         return boardResponseDto;
     }
-//    @Transactional
-//    public BoardResponseDto updateBoard(Long boardNo, BoardCreateDto boardCreateDto, Long userNo) {
-//        Board board = boardRepository.findById(boardNo)
-//                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. No: " + boardNo));
-//        if (!board.getUser().getUserNo().equals(userNo)) {
-//            throw new IllegalArgumentException("수정 권한이 없습니다. 작성자만 수정할 수 있습니다.");
-//        }
-//        board.updateBoard(boardCreateDto);
-//        Board updated = boardRepository.save(board);
-//        return BoardResponseDto.fromEntity(updated);
-//    }
 
     @Transactional
     public BoardResponseDto updateBoard(
@@ -113,19 +146,15 @@ public class BoardService implements ViewCountSyncable<Long> {
 
         log.info("삭제 요청된 파일 ID 목록: {}", deletedFileIds);
 
-        // 1. 파일 삭제 처리
         if (deletedFileIds != null && !deletedFileIds.isEmpty()) {
             for (Long fileNo : deletedFileIds) {
                 log.info("파일 삭제 호출됨: fileNo={}, userNo={}", fileNo, userNo);
                 multiFileService.delete(fileNo, userNo);
                 log.info("파일 삭제 완료: fileNo={}", fileNo);
             }
-            // 영속성 컨텍스트 즉시 반영
             boardRepository.flush();
         }
 
-
-        // 2. 새 파일 업로드
         if (files != null && files.length > 0) {
             multiFileService.createFiles(
                     File.ReferenceTable.BOARD,
@@ -135,7 +164,6 @@ public class BoardService implements ViewCountSyncable<Long> {
             );
         }
 
-        // 3. 응답 생성 - 삭제와 추가가 모두 완료된 후 조회
         BoardResponseDto responseDto = BoardResponseDto.fromEntity(board);
         List<FileDto> uploadedFiles = multiFileService.getFilesByReference(File.ReferenceTable.BOARD, boardNo);
         responseDto.setFiles(uploadedFiles);
@@ -152,7 +180,46 @@ public class BoardService implements ViewCountSyncable<Long> {
         }
         boardRepository.deleteById(boardNo);
     }
-    
+
+    @Transactional(readOnly = true)
+    public Page<BoardResponseDto> findBoardsByCategory(Long categoryNo, Pageable pageable) {
+        return findBoardsByCategory(categoryNo, pageable, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BoardResponseDto> findBoardsByCategory(Long categoryNo, Pageable pageable, String searchKeyword) {
+        System.out.println("🔍 서비스 호출:");
+        System.out.println("  - categoryNo: " + categoryNo);
+        System.out.println("  - pageable: " + pageable);
+        System.out.println("  - searchKeyword: [" + searchKeyword + "]");
+
+        BoardCategory boardCategory = categoryRepository.findById(categoryNo)
+                .orElseThrow(() -> new IllegalArgumentException("해당 카테고리를 찾을 수 없습니다. No: " + categoryNo));
+
+        Page<Board> boards;
+
+        if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+            System.out.println("✅ 검색 실행");
+            boards = boardRepository.searchBoardsByCategory(categoryNo, searchKeyword.trim(), pageable);
+        } else {
+            System.out.println("✅ 일반 조회 실행");
+            boards = boardRepository.findBoardsByCategoryNo(categoryNo, pageable);
+        }
+
+        System.out.println("📊 Repository 결과:");
+        System.out.println("  - totalElements: " + boards.getTotalElements());
+        System.out.println("  - totalPages: " + boards.getTotalPages());
+        System.out.println("  - currentPage: " + boards.getNumber());
+        System.out.println("  - pageSize: " + boards.getSize());
+
+        return boards.map(board -> {
+            BoardResponseDto dto = BoardResponseDto.fromEntity(board);
+            int replyCount = replyService.countByBoardNo(board.getBoardNo());
+            dto.setTotalReplyCount(replyCount);
+            return dto;
+        });
+    }
+
     // ------------------ 게시글 조회수 db 갱신------------------
     
     @Override

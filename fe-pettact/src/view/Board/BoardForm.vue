@@ -7,22 +7,19 @@
     </div>
 
     <div v-else>
-    <div class="form-header">
-      <div class="header-content">
-        <div class="breadcrumb">
-          <span @click="goBack" class="breadcrumb-link">커뮤니티</span>
-          <span class="breadcrumb-separator">></span>
-          <span @click="goToBoard" class="breadcrumb-link">{{ categoryInfo.title }}</span>
-          <span class="breadcrumb-separator">></span>
-          <span class="breadcrumb-current">글쓰기</span>
+      <div class="form-header">
+        <div class="header-content">
+          <div class="breadcrumb">
+            <span @click="goBack" class="breadcrumb-link">커뮤니티</span>
+            <span class="breadcrumb-separator">></span>
+            <span @click="goToBoard" class="breadcrumb-link">{{ categoryInfo.title }}</span>
+            <span class="breadcrumb-separator">></span>
+            <span class="breadcrumb-current">글쓰기</span>
+          </div>
+          <h1>{{ categoryInfo.title }}</h1>
         </div>
-        
-        <h1>{{ categoryInfo.title }} </h1>
       </div>
     </div>
-    </div>
-
-  
 
     <!-- 폼 영역 -->
     <div class="form-container">
@@ -55,7 +52,7 @@
           ></textarea>
         </div>
 
-        <!-- 이미지 업로드 (카테고리 설정에 따라) -->
+        <!-- 이미지 업로드 -->
         <div v-if="categoryInfo.allowImages" class="form-group">
           <label class="form-label">이미지 첨부</label>
           <div class="image-upload-area">
@@ -72,7 +69,7 @@
               <span>이미지 선택 (최대 {{ categoryInfo.maxImageCount }}개)</span>
             </div>
           </div>
-          
+
           <!-- 이미지 미리보기 -->
           <div v-if="selectedImages.length > 0" class="image-preview">
             <div
@@ -83,15 +80,13 @@
               <img :src="image.url" :alt="`Preview ${index + 1}`" />
               <button type="button" @click="removeImage(index)" class="remove-btn">×</button>
             </div>
+            <button type="button" @click="removeAllImages" class="remove-all-btn">
+              선택한 이미지 전체 삭제
+            </button>
           </div>
         </div>
 
-        <!-- 디버깅용 - 파일 UI 위에 추가 -->
-<div style="background: red; color: white; padding: 5px;">
-  DEBUG - allowAttachments: {{ categoryInfo.allowAttachments }}
-</div>
-
-        <!-- 첨부파일 (카테고리 설정에 따라) -->
+        <!-- 파일 업로드 -->
         <div v-if="categoryInfo.allowAttachments" class="form-group">
           <label class="form-label">파일 첨부</label>
           <div class="file-upload-area">
@@ -107,7 +102,7 @@
               <span>파일 선택 (최대 {{ categoryInfo.maxFileSize }}MB)</span>
             </div>
           </div>
-          
+
           <!-- 파일 목록 -->
           <div v-if="selectedFiles.length > 0" class="file-list">
             <div
@@ -119,10 +114,13 @@
               <span class="file-size">({{ formatFileSize(file.size) }})</span>
               <button type="button" @click="removeFile(index)" class="remove-btn">×</button>
             </div>
+            <button type="button" @click="removeAllFiles" class="remove-all-btn">
+              선택한 파일 전체 삭제
+            </button>
           </div>
         </div>
 
-        <!-- 폼 버튼들 -->
+        <!-- 폼 버튼 -->
         <div class="form-actions">
           <button type="button" @click="goBack" class="btn btn-cancel">취소</button>
           <button type="submit" :disabled="!isFormValid || isSubmitting" class="btn btn-submit">
@@ -142,6 +140,8 @@ import axios from 'axios'
 const route = useRoute()
 const router = useRouter()
 
+const imageInput = ref(null)
+const fileInput = ref(null)
 
 const categoryInfo = ref({
   title: '',
@@ -165,15 +165,41 @@ const isFormValid = computed(() => {
          formData.value.boardContent.trim().length > 0
 })
 
-// ✅ 템플릿에서 사용하는 함수들 즉시 추가
+
+// const handleImageUpload = (event) => {
+//   const files = Array.from(event.target.files)
+//   const maxCount = boardConfig.value.boardMaxImageCount
+
+//   if (selectedImages.value.length + files.length > maxCount) {
+//     alert(`이미지는 최대 ${maxCount}장까지만 업로드할 수 있습니다.`)
+//     return
+//   }
+
+//   files.forEach(file => {
+//     if (file.type.startsWith('image/')) {
+//       const url = URL.createObjectURL(file)
+//       selectedImages.value.push({ file, url })
+//     }
+//   })
+//   event.target.value = ''
+// }
+
 const handleImageUpload = (event) => {
   const files = Array.from(event.target.files)
-  files.forEach(file => {
-    if (file.type.startsWith('image/')) {
-      const url = URL.createObjectURL(file)
-      selectedImages.value.push({ file, url })
+  const maxCount = categoryInfo.value.maxImageCount
+
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) continue
+    if (selectedImages.value.length >= maxCount) {
+      alert(`이미지는 최대 ${maxCount}장까지만 업로드할 수 있습니다.`)
+      break
     }
-  })
+
+    const url = URL.createObjectURL(file)
+    selectedImages.value.push({ file, url })
+  }
+
+  // 파일 input 초기화 (같은 파일 다시 업로드 허용)
   event.target.value = ''
 }
 
@@ -194,6 +220,22 @@ const removeFile = (index) => {
   selectedFiles.value.splice(index, 1)
 }
 
+// 전체 이미지 삭제
+const removeAllImages = () => {
+  selectedImages.value = []
+  if (imageInput.value) {
+    imageInput.value.value = null
+  }
+}
+
+// 전체 파일 삭제
+const removeAllFiles = () => {
+  selectedFiles.value = []
+  if (fileInput.value) {
+    fileInput.value.value = null
+  }
+}
+
 const formatFileSize = (bytes) => {
   if (bytes === 0) return '0 Bytes'
   const k = 1024
@@ -208,20 +250,22 @@ const submitForm = async () => {
   try {
     isSubmitting.value = true
     
+    // ✅ categoryNo 변수 선언
+    const categoryNo = route.params.categoryNo
+    
     const submitData = new FormData()
     
-    // JSON 데이터
     const boardData = {
       boardTitle: formData.value.boardTitle.trim(),
       boardContent: formData.value.boardContent.trim(),
-      boardCategoryNo: parseInt(route.params.categoryNo)
+      boardCategoryNo: parseInt(categoryNo)
     }
     
     submitData.append('data', new Blob([JSON.stringify(boardData)], {
       type: 'application/json'
     }))
     
-    // 파일들이 있을 때만 추가
+    // 파일 처리...
     if (selectedImages.value && selectedImages.value.length > 0) {
       selectedImages.value.forEach((image) => {
         submitData.append('files', image.file)
@@ -237,7 +281,7 @@ const submitForm = async () => {
     const response = await axios.post('/v1/board', submitData)
     
     alert('게시글이 성공적으로 등록되었습니다.')
-    router.push(`/board/${response.data.boardNo}`)
+    router.push(`/board/${categoryNo}`)
     
   } catch (error) {
     console.error('게시글 등록 실패:', error)
@@ -256,9 +300,15 @@ const loadCategoryInfo = async () => {
       title: response.data.boardCategoryTitle || '게시판',
       allowImages: response.data.boardAllowImage,         
       allowAttachments: response.data.boardAllowAttachment,
-      maxImageCount: response.data.boardMaxImageCount || 5,
-      maxFileSize: response.data.boardMaxFileSize || 50
+      maxImageCount: response.data.boardMaxImageCount,
+      maxFileSize: response.data.boardMaxFileSize
     }
+
+    console.log('백엔드에서 받은 값:', {
+    boardMaxImageCount: response.data.boardMaxImageCount,
+    boardMaxFileCount: response.data.boardMaxFileCount
+})
+
   } catch (error) {
     console.error('에러:', error)
     categoryInfo.value = {
@@ -439,6 +489,16 @@ onMounted(() => {
   object-fit: cover;
 }
 
+.remove-all-btn {
+  margin-top: 10px;
+  background-color: #eee;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
 .remove-btn {
   position: absolute;
   top: 5px;
@@ -468,6 +528,7 @@ onMounted(() => {
   background: #f8f9fa;
   border-radius: 6px;
   margin-bottom: 8px;
+  position: relative;
 }
 
 .file-name {

@@ -36,95 +36,101 @@
 
 
 <script setup>
-// import { ref, computed, onMounted } from 'vue'
-// import { useRouter } from 'vue-router'
-// import { useUserStore } from '@/stores/user'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user' 
 
-// const router = useRouter()
-// const userStore = useUserStore()
-// const showDropdown = ref(false)
+const router = useRouter()
+const userStore = useUserStore()
+const showDropdown = ref(false)
 
 
-// // Computed
-// const isLoggedIn = computed(() => !!userStore.user)
+// Computed
+const isLoggedIn = computed(() => !!userStore.user)
 
-// const isAdmin = computed(() => userStore.user?.userRole === 'ROLE_ADMIN')
+const isAdmin = computed(() => userStore.user?.userRole === 'ROLE_ADMIN')
 
-// const userNickname = computed(() => {
-//   const user = userStore.user
-//   if (!user) return '사용자님'
+const userNickname = computed(() => {
+  const user = userStore.user
+  if (!user) return '사용자님'
   
-//   // userNickname이 있으면 그대로 사용 (xxxyo23님)
-//   if (user.userNickname) {
-//     return user.userNickname + '님'
-//   } else if (user.userEmail) {
-//     return user.userEmail.split('@')[0] + '님'
-//   }
-//   return '사용자님'
-// })
+  // userNickname이 있으면 그대로 사용 (xxxyo23님)
+  if (user.userNickname) {
+    return user.userNickname + '님'
+  } else if (user.userEmail) {
+    return user.userEmail.split('@')[0] + '님'
+  }
+  return '사용자님'
+})
 
-// // Methods
+// Methods
 // const goToPetChat = () => {
 //   router.push('/petChat')
 // }
 
-// const goToLogin = () => {
-//   router.push('/user/login')
-// }
+const goToLogin = () => {
+  router.push('/user/login')
+}
 
 // const goToSignup = () => {
 //   router.push('/signup')
 // }
 
-// const goHome = () => {
-//   router.push('/')
-// }
+const goHome = () => {
+  router.push('/')
+}
 
-// const goToBoardCategoryList = () => {
-//   router.push('/boardCategoryList')
-// }
+const goToBoardCategoryList = () => {
+  router.push('/boardCategoryList')
+}
 
-// const toggleDropdown = () => {
-//   showDropdown.value = !showDropdown.value
-// }
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value
+}
 
-// // const goToProfile = () => {
-// //   router.push('/profile')
-// //   showDropdown.value = false
-// // }
-
-// // const goToMyPosts = () => {
-// //   router.push('/my-posts')
-// //   showDropdown.value = false
-// // }
-
-// // const goToSettings = () => {
-// //   router.push('/settings')
-// //   showDropdown.value = false
-// // }
-
-// const handleLogout = () => {
-//   userStore.logout()
+// const goToProfile = () => {
+//   router.push('/profile')
 //   showDropdown.value = false
-//   router.push('/')
 // }
 
-// // Lifecycle
-// onMounted(() => {
-//   console.log('Navbar mounted, 초기 user:', userStore.user)
-//   // 앱 시작시 토큰에서 사용자 정보 복원
-//   userStore.restoreUserFromToken()
-//   console.log('restoreUserFromToken 후 user:', userStore.user)
+// const goToMyPosts = () => {
+//   router.push('/my-posts')
+//   showDropdown.value = false
+// }
+
+// const goToSettings = () => {
+//   router.push('/settings')
+//   showDropdown.value = false
+// }
+
+const handleLogout = () => {
+  userStore.logout()
+  showDropdown.value = false
+  router.push('/')
+}
+
+// Lifecycle
+onMounted(async () => {
+  console.log('restoreUserFromToken 타입:', typeof userStore.restoreUserFromToken);
   
-//   // 외부 클릭시 드롭다운 닫기
-//   document.addEventListener('click', (e) => {
-//     // 컴포넌트 참조는 template ref를 사용해야 함
-//     // 일단 전역으로 처리
-//     if (!document.querySelector('.user-profile')?.contains(e.target)) {
-//       showDropdown.value = false
-//     }
-//   })
-// })
+  if (typeof userStore.restoreUserFromToken === 'function') {
+    await userStore.restoreUserFromToken(); // 토큰 복원 후 유저 정보 요청
+    console.log('restoreUserFromToken 후 user:', userStore.user);
+  } else {
+    console.error('restoreUserFromToken 함수가 존재하지 않습니다.');
+  }
+
+  console.log('Navbar mounted, 초기 user:', userStore.user);
+  
+  // 외부 클릭시 드롭다운 닫기
+  document.addEventListener('click', (e) => {
+    // 컴포넌트 참조는 template ref를 사용해야 함
+    // 일단 전역으로 처리
+    if (!document.querySelector('.user-profile')?.contains(e.target)) {
+      showDropdown.value = false
+    }
+  })
+})
 </script>
 
 <style scoped>
