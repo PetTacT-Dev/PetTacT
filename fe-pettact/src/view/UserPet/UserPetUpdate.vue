@@ -40,7 +40,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-//import axios from '@/js/axios';
+import axios from 'axios';
 import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
@@ -48,7 +48,7 @@ const route = useRoute();
 const pet = ref({});
 
 onMounted(() => {
-  axios.get(`/pet/${route.params.petId}`).then((res) => {
+  axios.get(`/v1/pet/${route.params.petId}`).then((res) => {
     pet.value = res.data;
   });
 });
@@ -56,7 +56,7 @@ onMounted(() => {
 const updatePet = () => {
   if (!validatePet()) return;
 
-  axios.put(`/pet/${route.params.petId}`, pet.value).then(() => {
+  axios.put(`/v1/pet/${route.params.petId}`, pet.value).then(() => {
     alert('수정 완료');
     router.push('/userPet');
   }).catch(err => {

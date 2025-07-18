@@ -2,11 +2,12 @@
   <div class="container mt-4">
     <h2 class="mb-4 border-bottom pb-2">게시물 관리</h2>
 
+    <!-- 검색 필터 -->
     <div class="card mb-4">
       <div class="card-body">
         <form class="row g-3">
           <div class="col-md-4">
-            <input v-model="filters.keyword" type="text" class="form-control" placeholder="제목 검색">
+            <input v-model="filters.keyword" type="text" class="form-control" placeholder="제목 검색" />
           </div>
           <div class="col-md-3">
             <select v-model="filters.categoryNo" class="form-select">
@@ -24,12 +25,13 @@
             </select>
           </div>
           <div class="col-md-2 d-grid">
-            <button type="button" class="btn btn-primary" @click="getBoardList">검색</button>
+            <button type="button" class="btn btn-primary" @click="onSearch">검색</button>
           </div>
         </form>
       </div>
     </div>
 
+    <!-- 테이블 -->
     <div class="table-responsive">
       <table class="table table-striped table-hover align-middle">
         <thead class="table-dark">
@@ -45,14 +47,14 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(board, index) in boardList" :key="board.boardNo">
-            <td>{{ index + 1 }}</td>
+          <tr v-for="(board, index) in pageData.content" :key="board.boardNo">
+            <td>{{ index + 1 + ((pageData.currentPage - 1) * pageData.pageSize) }}</td>
             <td>{{ board.boardTitle }}</td>
             <td>{{ board.categoryName }}</td>
             <td>{{ board.userNickname }}</td>
             <td>{{ board.userEmail }}</td>
             <td>{{ formatDateTime(board.createdAt) }}</td>
-            <td>{{ board.isDeleted }}</td>
+            <td>{{ board.isDeleted ? '삭제됨' : '활성' }}</td>
             <td>
               <button type="button" class="btn btn-sm btn-outline-primary" @click="showDetail(board.boardNo)">상세보기</button>
             </td>
@@ -60,6 +62,14 @@
         </tbody>
       </table>
     </div>
+
+    <!-- 페이징 -->
+    <Pagination
+      :totalElements="pageData.totalElements"
+      :currentPage="pageData.currentPage"
+      :pageSize="pageData.pageSize"
+      @change="onPageChange"
+    />
   </div>
 </template>
 
@@ -67,10 +77,16 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import Pagination from '@/components/common/Pagination.vue'
 
-const boardList = ref([])
-const categories = ref([])
 const router = useRouter()
+
+const pageData = ref({
+  content: [],
+  totalElements: 0,
+  currentPage: 1,
+  pageSize: 10
+})
 
 const filters = ref({
   keyword: '',
@@ -78,7 +94,8 @@ const filters = ref({
   isDeleted: ''
 })
 
-// 카테고리 목록 조회
+const categories = ref([])
+
 const getCategories = async () => {
   try {
     const res = await axios.get('/v1/board-categories')
@@ -88,19 +105,29 @@ const getCategories = async () => {
   }
 }
 
-const getBoardList = async () => {
+const getBoardList = async (page = 1) => {
   try {
     const res = await axios.get('/v1/admin/board', {
       params: {
         keyword: filters.value.keyword,
         category: filters.value.categoryNo,
-        isDeleted: filters.value.isDeleted
+        isDeleted: filters.value.isDeleted,
+        page: page,
+        size: pageData.value.pageSize
       }
     })
-    boardList.value = res.data
+    pageData.value = res.data
   } catch (err) {
     console.error(err)
   }
+}
+
+const onSearch = () => {
+  getBoardList(1) // 검색 시 페이지 초기화
+}
+
+const onPageChange = (page) => {
+  getBoardList(page)
 }
 
 const formatDateTime = (dateTimeStr) => {

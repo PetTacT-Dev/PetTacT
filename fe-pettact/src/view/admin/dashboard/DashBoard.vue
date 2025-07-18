@@ -13,7 +13,7 @@
 
     <div class="row g-3 mt-3">
       <div class="col-md-4">
-          <UserStatsChart />
+          <UserDailyChart />
       </div>
 
       <div class="col-md-4">
@@ -27,7 +27,12 @@
     
     <div class="row g-3 mt-3">
       <div class="col-12">
-          <RecentDeletedBoards />
+          <ReportSummary />
+      </div>
+    </div>
+    <div class="row g-3 mt-3">
+      <div class="col-12">
+          <SellerPendingSummary />
       </div>
     </div>
 
@@ -37,10 +42,11 @@
 <script setup>
 import CategoryBoardChart from './components/CategoryBoardChart.vue';
 import KpiCards from './components/KpiCards.vue';
-import UserStatsChart from './components/UserStatsChart.vue';
 import BoardDailyChart from './components/BoardDailyChart.vue';
 import ReportDailyChart from './components/ReportDailyChart.vue';
-import RecentDeletedBoards from './components/RecentDeletedBoards.vue';
+import ReportSummary from './components/ReportSummary.vue';
+import SellerPendingSummary from './components/SellerPendingSummary.vue';
+import UserDailyChart from './components/UserDailyChart.vue';
 </script>
 
 <style scoped>

@@ -52,10 +52,9 @@
     </form>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from 'vue'
-//import axios from '@/js/axios'
+import axios from 'axios'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -76,9 +75,19 @@ const selectedSido = ref('')
 const selectedSigungu = ref('')
 
 onMounted(() => {
-  axios.get('/pet/sido').then(res => {
+  axios.get('/v1/pet/sido').then(res => {
     sidoList.value = res.data.items
   })
+  const kakaoScript = document.createElement('script')
+  kakaoScript.src = '//dapi.kakao.com/v2/maps/sdk.js?appkey=becfe069cca65d679dc79f6ef0a6cee7&libraries=services'
+  kakaoScript.async = true
+  document.head.appendChild(kakaoScript)
+
+  const postcodeScript = document.createElement('script')
+  postcodeScript.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+  postcodeScript.async = true
+  document.head.appendChild(postcodeScript)
+
 })
 
 const handleSidoChange = () => {
@@ -87,7 +96,7 @@ const handleSidoChange = () => {
   form.value.orgNm = ''
 
   if (selectedSido.value) {
-    axios.get('/pet/sigungu', {
+    axios.get('/v1/pet/sigungu', {
       params: { uprCd: selectedSido.value.orgCd }
     }).then(res => {
       sigunguList.value = res.data.items
@@ -118,7 +127,7 @@ const openDaumPostcode = () => {
 }
 
 const submitForm = () => {
-  axios.post('/api/shelter', form.value)
+  axios.post('/v1/api/shelter', form.value)
     .then(() => {
       alert('등록 완료!')
       router.push('/shelter')

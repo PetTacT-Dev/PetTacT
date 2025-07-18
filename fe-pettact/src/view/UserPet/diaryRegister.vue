@@ -28,7 +28,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-// import axios from '@/js/axios';
+import axios from 'axios';
 
 const petList = ref([]);
 const selectedPetId = ref('');
@@ -42,7 +42,7 @@ const generated = ref({
 
 // 1. 사용자 펫 목록 가져오기
 const fetchUserPets = () => {
-  axios.get('/pet/list') // 로그인한 유저 기준으로 펫 목록 조회
+  axios.get('/v1/pet/list') // 로그인한 유저 기준으로 펫 목록 조회
     .then(res => {
       petList.value = res.data.content || res.data; // Page 타입 또는 일반 리스트
     })
@@ -61,7 +61,7 @@ const createDiary = () => {
 
   loading.value = true;
 
-  axios.post('/diary/create', {
+  axios.post('/v1/diary/create', {
     petId: selectedPetId.value,
     prompt: prompt.value.trim()
   })

@@ -29,14 +29,14 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-// import axios from '@/js/axios'
+import axios from 'axios'
 
 const route = useRoute()
 const shelter = ref(null)
 
 onMounted(() => {
   const shelterNo = route.params.shelterNo
-  axios.get(`api/shelter/${shelterNo}`)
+  axios.get(`/v1/api/shelter/${shelterNo}`)
     .then(res => {
       shelter.value = res.data
     })

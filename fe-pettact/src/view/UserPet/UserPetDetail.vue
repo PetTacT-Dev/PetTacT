@@ -23,7 +23,7 @@
 </template>
 <script setup>
 import { ref, onMounted } from 'vue';
-// import axios from '@/js/axios';
+import axios from 'axios';
 import { useRoute, useRouter } from 'vue-router';
 
 const pet = ref(null);
@@ -31,7 +31,7 @@ const route = useRoute();
 const router = useRouter();
 
 onMounted(() => {
-  axios.get(`/pet/${route.params.petId}`).then((res) => {
+  axios.get(`/v1/pet/${route.params.petId}`).then((res) => {
     pet.value = res.data;
   });
 });
@@ -46,7 +46,7 @@ const list = () => {
 };
 const deletePet = () => {
   if (confirm('정말 삭제하시겠습니까?')) {
-    axios.delete(`/pet/${route.params.petId}`).then(() => {
+    axios.delete(`/v1/pet/${route.params.petId}`).then(() => {
       alert('삭제 완료');
       router.push('/userPet');
     }).catch(err => {

@@ -51,8 +51,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-//import axios from '@/js/axios'
-//import Pagination from '@/components/Pagination.vue'
+import axios from 'axios'
+import Pagination from '@/components/common/Paginations.vue'
 
 const shelterList = ref([])
 const sidoList = ref([])
@@ -64,7 +64,7 @@ const totalElements = ref(0)
 const searched = ref(false)
 
 const fetchSido = () => {
-  axios.get('/pet/sido').then(res => {
+  axios.get('/v1/pet/sido').then(res => {
     sidoList.value = res.data.items
   })
 }
@@ -79,7 +79,7 @@ const goPage = (targetPage) => {
     params.sido = selectedSido.value.orgdownNm
   }
 
-  axios.get('/pet/shelter', { params }).then(res => {
+  axios.get('/v1/pet/shelter', { params }).then(res => {
     shelterList.value = res.data.content
     totalPages.value = res.data.totalPages
     totalElements.value = res.data.totalElements

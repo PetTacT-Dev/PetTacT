@@ -1,32 +1,35 @@
 <template>
-  <div>
-    <h2>{{ chatStore.name }}</h2>
-
-    <div ref="chatBox" class="chat-box">
+  <div class="chat-room">
+    <div ref="chatBox" class="chat-messages">
       <div
-        v-for="(msg, idx) in chatStore.messages"
-        :key="idx"
-        :class="['message', msg.isMine ? 'mine' : 'other']"
+        v-for="(msg, index) in modalStore.messages"
+        :key="index"
+        :class="['chat-message', msg.isMine ? 'me' : 'other']"
       >
-        <strong>[{{ msg.senderNickname }}]</strong> {{ msg.message }}
+        <span class="sender">{{ msg.senderNickname }}</span>
+        <div class="bubble">{{ msg.message }}</div>
       </div>
     </div>
 
-    <input
-      v-model="message"
-      @keyup.enter="sendMessage"
-      placeholder="메세지 입력"
-    />
-    <!-- <button class="send-btn"@click="sendMessage">전송</button> -->
+    <div class="chat-input">
+      <input
+        v-model="message"
+        @keyup.enter="sendMessage"
+        type="text"
+        placeholder="메시지를 입력하세요"
+      />
+      <button @click="sendMessage">전송</button>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
-// import { useChatStore } from '@/js/pinia';
+import { useModalStore } from '@/js/modalStore';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
-// import axios from '@/js/axios';
+import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
 
 const props = defineProps({
   roomNo: {
@@ -35,51 +38,94 @@ const props = defineProps({
   }
 });
 
-const chatStore = useChatStore();
+const modalStore = useModalStore();
 const message = ref('');
 const chatBox = ref(null);
+let stompClient = null;
 
-const jwtToken = 'Bearer eyJ1c2VyTmlja25hbWUiOiLtjqvthY3tirgiLCJ1c2VyUm9sZSI6IlJPTEVfVVNFUiIsInVzZXJObyI6MSwidXNlckVtYWlsIjoicGV0dGFjdDIwMjVAZ21haWwuY29tIiwiYWxnIjoiSFMyNTYifQ.eyJ1c2VyTmlja25hbWUiOiLtjqvthY3tirgiLCJ1c2VyRW1haWwiOiJwZXR0YWN0MjAyNUBnbWFpbC5jb20iLCJ1c2VyUm9sZSI6IlJPTEVfVVNFUiIsInVzZXJObyI6MSwiaWF0IjoxNzUyMjAwNzM3LCJleHAiOjE3NTMwNjQ3Mzd9.shCmZ-OcjW6NYbmzPcNb_nHEw7R6jLCZdgV2VYRBjQM'; // 실제 JWT 토큰 사용
+// JWT 디코드
+function getUserInfoFromToken() {
+  const token = localStorage.getItem('accessToken');
+  return token ? jwtDecode(token) : null;
+}
 
-// 메시지 불러오기
-function fetchMessages(roomNo) {
-  axios.get(`/chat/message/${roomNo}`, {
-    headers: {
-      Authorization: jwtToken
+// 메시지 불러오기 + 읽음 처리
+async function fetchMessages(roomNo) {
+  try {
+    const res = await axios.get(`/v1/chat/message/${roomNo}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+      }
+    });
+
+    const userNo = getUserInfoFromToken()?.userNo;
+    modalStore.messages = res.data.map(msg => ({
+      ...msg,
+      isMine: msg.senderUserNo === userNo
+    }));
+
+    const lastId = modalStore.messages.at(-1)?.messageId;
+    if (lastId) {
+      await axios.post('/v1/chat/read', {
+        roomNo,
+        lastMessageId: lastId
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
     }
-  })
-  .then(res => {
-    chatStore.messages = res.data;
-  })
-  .catch(err => {
+
+  } catch (err) {
     console.error('메시지 불러오기 실패:', err);
-  });
+  }
 }
 
 // 웹소켓 연결
 function connect(roomNo) {
-  chatStore.roomNo = roomNo;
+  const token = localStorage.getItem('accessToken');
+  const userNo = getUserInfoFromToken()?.userNo;
 
-  const socket = new SockJS('http://localhost:8080/ws-stomp');
-  const stompClient = new Client({
+  const socket = new SockJS('/ws-stomp');
+  stompClient = new Client({
     webSocketFactory: () => socket,
     connectHeaders: {
-      Authorization: jwtToken,
+      Authorization: `Bearer ${token}`
     },
     reconnectDelay: 5000,
-    heartbeatIncoming: 10000,
-    heartbeatOutgoing: 10000,
     onConnect: () => {
-      chatStore.connected = true;
-      chatStore.setClient(stompClient);
+      console.log('✅ STOMP 연결 성공');
+      modalStore.connected = true;
+      modalStore.setClient(stompClient);
 
-      stompClient.subscribe(`/topic/chat/room/${roomNo}`, (msg) => {
+      stompClient.subscribe(`/topic/chat/room/${roomNo}`, async (msg) => {
         const data = JSON.parse(msg.body);
-        chatStore.addMessage(data);
+        data.isMine = data.senderUserNo === userNo;
+
+        modalStore.addMessage(data);
+
+        // ✅ 수신한 메시지가 내 것이 아니라면 즉시 읽음 처리
+        if (!data.isMine && data.messageId) {
+          try {
+            await axios.post('/v1/chat/read', {
+              roomNo,
+              lastMessageId: data.messageId
+            }, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            });
+          } catch (err) {
+            console.error('읽음 처리 실패:', err);
+          }
+        }
       });
     },
     onStompError: (frame) => {
-      console.error('STOMP 에러:', frame);
+      console.error('❌ STOMP 에러:', frame);
+    },
+    onWebSocketError: (event) => {
+      console.error('❌ WebSocket 연결 실패:', event);
     }
   });
 
@@ -88,17 +134,16 @@ function connect(roomNo) {
 
 // 메시지 전송
 function sendMessage() {
-  if (!chatStore.connected || !message.value.trim()) return;
+  if (!modalStore.connected || !message.value.trim()) return;
 
-  chatStore.stompClient?.publish({
+  stompClient?.publish({
     destination: '/app/chat/message',
     body: JSON.stringify({
-      type: 'TALK',
-      roomNo: chatStore.roomNo,
+      roomNo: modalStore.roomNo,
       message: message.value
     }),
     headers: {
-      Authorization: jwtToken
+      Authorization: `Bearer ${localStorage.getItem('accessToken')}`
     }
   });
 
@@ -106,64 +151,134 @@ function sendMessage() {
 }
 
 // 자동 스크롤
-watch(() => chatStore.messages.length, async () => {
+watch(() => modalStore.messages.length, async () => {
   await nextTick();
   if (chatBox.value) {
     chatBox.value.scrollTop = chatBox.value.scrollHeight;
   }
 });
 
-onMounted(async () => {
-  await fetchMessages(props.roomNo);
+onMounted(() => {
+  fetchMessages(props.roomNo);
   connect(props.roomNo);
 });
 
 onBeforeUnmount(() => {
-  chatStore.stompClient?.deactivate();
+  stompClient?.deactivate();
 });
 </script>
 
 <style scoped>
-.chat-box {
-  height: 300px;
-  overflow-y: auto;
-  padding: 10px;
-  background: #1e1e1e;
-  border-radius: 8px;
-  margin-bottom: 10px;
+.chat-room {
   display: flex;
   flex-direction: column;
+  height: 400px;
+  background-color: #e5ddd5;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 메시지 공통 스타일 */
-.message {
-  margin: 5px 0;
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-message {
+  display: flex;
+  flex-direction: column;
   max-width: 70%;
+}
+
+.chat-message.me {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.chat-message.other {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.sender {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.bubble {
+  position: relative;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.4;
+  background-color: #ffffff;
+  color: #000;
   word-break: break-word;
 }
 
-/* 내 메시지: 오른쪽 */
-.mine {
-  align-self: flex-end;
-  text-align: right;
-  color: #fff;
+.chat-message.me .bubble {
+  background-color: #9fe6a0;
+  color: #000;
 }
 
-/* 상대 메시지: 왼쪽 */
-.other {
-  align-self: flex-start;
-  text-align: left;
-  color: #aaa;
+.chat-message.other .bubble::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: -6px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-right: 6px solid #ffffff;
+  border-bottom: 6px solid transparent;
 }
 
-.send-btn {
-  margin-top: 12px;
+.chat-message.me .bubble::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: -6px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-left: 6px solid #9fe6a0;
+  border-bottom: 6px solid transparent;
+}
+
+.chat-input {
+  display: flex;
+  border-top: 1px solid #ccc;
+  padding: 10px;
+  background-color: #f0f0f0;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  outline: none;
+  background-color: #fff;
+  margin-right: 8px;
+}
+
+.chat-input button {
   padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
   background-color: #4caf50;
   color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
   cursor: pointer;
-  font-weight: bold;
+}
+
+.chat-input button:hover {
+  background-color: #43a047;
 }
 </style>

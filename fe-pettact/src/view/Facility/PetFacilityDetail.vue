@@ -36,7 +36,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-//import axios from '@/js/axios'
+import axios from 'axios'
+
 
 const facility = ref(null)
 const route = useRoute()
@@ -44,7 +45,7 @@ const route = useRoute()
 onMounted(() => {
   const facilityNo = route.params.facilityNo
 
-  axios.get(`/api/facility/${facilityNo}`)
+  axios.get(`/v1/api/facility/${facilityNo}`)
     .then(res => {
       facility.value = res.data
       console.log(res.data);

@@ -43,15 +43,15 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-//import axios from '@/js/axios'
-//import Pagination from '@/components/Pagination.vue'
+import axios from 'axios'
+import Pagination from '@/components/common/Paginations.vue'
 
 const petList = ref([])
 const page = ref(1)
 const totalPages = ref(1)
 
 const goPage = (targetPage) => {
-  axios.get('/pet/list', { params: { page: targetPage, size: 10 } })
+  axios.get('/v1/pet/list', { params: { page: targetPage, size: 10 } })
     .then(res => {
       petList.value = res.data.content
       totalPages.value = res.data.totalPages

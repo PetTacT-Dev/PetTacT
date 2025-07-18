@@ -205,8 +205,8 @@ const userEmailReceiveAgree = ref(false)    // 이메일 수신여부
 const isNicknameChecked = ref(false);
 const errorMessage = ref('');
 
-onMounted(() => {
-    userStore.restoreUserFromToken();
+onMounted(async () => {
+    await userStore.fetchUser();
 
     if (!userStore.accessToken) {
         console.error('토큰 없음, 재로그인 필요');

@@ -1,29 +1,39 @@
 <template>
-  <div>
-    <h5 class="mt-3">신고 내역</h5>
+  <div class="container mt-4">
+    <h4 class="mb-3 border-bottom pb-2">내 신고 내역</h4>
 
-    <div v-if="reports.length > 0" class="list-group mt-2">
-      <a
-        v-for="report in reports"
-        :key="report.reportNo"
-        class="list-group-item list-group-item-action"
-        @click="goToDetail(report.reportNo)"
-      >
-        <div class="d-flex w-100 justify-content-between">
-          <h6 class="mb-1">{{ report.reportReason }}</h6>
-          <small>{{ formatDate(report.createdAt) }}</small>
-        </div>
-        <p class="mb-1">
-          대상: {{ report.reportTargetLocation }} / 상태:
-          <span :class="statusBadgeClass(report.reportStatus)">
-            {{ statusText(report.reportStatus) }}
-          </span>
-        </p>
-      </a>
-    </div>
-
-    <div v-else class="mt-2">
-      <p>신고 내역이 없습니다.</p>
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle text-center">
+        <thead class="table-light">
+          <tr>
+            <th>대상정보</th>
+            <th>신고사유</th>
+            <th>작성일</th>
+            <th>상태</th>
+            <th>상세보기</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="reports.length === 0">
+            <td colspan="5" class="py-4 text-muted">내역이 없습니다</td>
+          </tr>
+          <tr v-for="report in reports" :key="report.reportNo">
+            <td>{{ locationLabel(report.reportTargetLocation) }}</td>
+            <td>{{ report.reportReasonDescription }}</td>
+            <td>{{ formatDate(report.createdAt) }}</td>
+            <td>
+              <span :class="statusBadgeClass(report.reportStatus)">
+                {{ statusText(report.reportStatus) }}
+              </span>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary" @click="goToDetail(report.reportNo)">
+                상세
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
@@ -46,7 +56,7 @@ const fetchReports = async () => {
 };
 
 const goToDetail = (reportNo) => {
-  router.push({ name: 'myReportDetail', params: { reportNo } });
+  router.push({ name: "myReportDetail", params: { reportNo } });
 };
 
 const formatDate = (dateStr) => {
@@ -65,8 +75,21 @@ const statusText = (status) => {
   }
 };
 
+const locationLabel = (location) => {
+  switch (location) {
+    case 'BOARD': return '게시글'
+    case 'REPLY': return '댓글'
+    case 'PRODUCT': return '상품'
+    case 'CART': return '장바구니'
+    case 'ORDER': return '주문'
+    case 'PET': return '동물'
+    case 'USER': return '회원'
+    default: return location
+  }
+}
+
 const statusBadgeClass = (status) => {
-  return status === 1 ? "badge bg-success" : "badge bg-secondary";
+  return "badge " + (status === 1 ? "bg-success" : status === 2 ? "bg-danger" : "bg-secondary");
 };
 
 onMounted(fetchReports);

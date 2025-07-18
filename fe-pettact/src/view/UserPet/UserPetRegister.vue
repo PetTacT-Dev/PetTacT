@@ -45,7 +45,7 @@
 
 <script setup>
 import { ref } from 'vue';
-// import axios from '@/js/axios';
+import axios from 'axios';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -74,7 +74,7 @@ const fetchKinds = () => {
 
   if (!selectedUpKindCd.value) return;
 
-  axios.get('/pet/kind', {
+  axios.get('/v1/pet/kind', {
     params: { upKindCd: selectedUpKindCd.value }
   }).then(res => {
     kindList.value = res.data.items;
@@ -90,7 +90,7 @@ const handleKindChange = () => {
 };
 
 const registerPet = () => {
-  axios.post('/pet', pet.value).then(() => {
+  axios.post('/v1/pet', pet.value).then(() => {
     alert('등록 성공');
     router.push('/userPet');
   });

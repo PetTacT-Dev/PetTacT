@@ -20,7 +20,7 @@
       
     </div>
 
-    <h1>상품 목록</h1>
+    <h1 class="text-black">상품 목록</h1>
     <div class="mb-3">
       <!-- 상품 등록 버튼 (SELLER만 노출) -->
       <button v-if="userStore.user?.userRole === 'ROLE_SELLER' || userStore.user?.userRole === 'ROLE_ADMIN'" @click="goToCreateProduct" class="btn btn-secondary me-2">상품 등록</button>
@@ -183,19 +183,11 @@ const goToCart = () => {
   router.push({ name: 'Cart' })
 }
 
-onMounted(() => {
+onMounted(async () => {
 
-    // userStore.user가 없거나 userRole이 없으면 임시로 할당 (테스트용) - 백엔드 수정 후 삭제 예정 아직 토큰 값에 권한 X 
-    if (!userStore.user || !userStore.user.userRole) {
-      userStore.user = {
-        ...userStore.user, // 기존 데이터가 있으면 유지
-        userRole: 'ROLE_NORMAL', // 원하는 임시 권한 넣기 (ROLE_ADMIN , ROLE_NORMAL 등)
-        userEmail: 'test@example.com',
-        userNickname: '테스트유저',
-        userNo: 999
-      };
-      console.log('임시로 userStore.user.userRole 할당:', userStore.user.userRole);
-    }
+    await userStore.fetchUser();  // ✅ 정상 작동
+    console.log('가져온 유저 정보:', userStore.user);
+
     productStore.fetchCategories();
 
     const page = parseInt(route.query.page) || 0;

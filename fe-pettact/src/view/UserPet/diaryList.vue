@@ -24,7 +24,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-//import axios from '@/js/axios';
+import axios from 'axios';
 import { useRoute , useRouter} from 'vue-router';
 
 const route = useRoute();
@@ -36,7 +36,7 @@ const petName = ref('');
 
 // 1. 일기 목록 조회
 const fetchDiaryList = () => {
-  axios.get(`/diary/${petId}`)
+  axios.get(`/v1/diary/${petId}`)
     .then(res => {
       diaryList.value = res.data;
     })
@@ -48,7 +48,7 @@ const fetchDiaryList = () => {
 
 // 2. petName 조회
 const fetchPetName = () => {
-  axios.get(`/pet/${petId}`)
+  axios.get(`/v1/pet/${petId}`)
     .then(res => {
       petName.value = res.data.petName || '반려동물';
     })
@@ -61,7 +61,7 @@ const fetchPetName = () => {
 // 3. 일기 삭제
 const deleteDiary = (diaryId) => {
   if (confirm('정말 삭제하시겠습니까?')) {
-    axios.put(`/diary/${diaryId}`)
+    axios.put(`/v1/diary/${diaryId}`)
       .then(() => {
         alert('삭제 완료');
         fetchDiaryList();

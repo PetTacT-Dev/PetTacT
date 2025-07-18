@@ -7,7 +7,7 @@
 
         <!-- 공통 -->
         <li class="nav-item">
-          <router-link :to="{ name: 'dashboard' }" class="nav-link text-white">대시보드</router-link>
+          <router-link :to="{ name: 'adminDashboard' }" class="nav-link text-white">대시보드</router-link>
         </li>
 
         <!-- 회원 관리 -->

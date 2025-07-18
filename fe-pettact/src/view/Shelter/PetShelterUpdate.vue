@@ -52,10 +52,9 @@
     </form>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from 'vue'
-//import axios from '@/js/axios'
+import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -79,25 +78,37 @@ const selectedSigungu = ref('')
 
 // 시도 리스트
 onMounted(() => {
-  axios.get('/pet/sido').then(res => {
+    const kakaoScript = document.createElement('script')
+  kakaoScript.src = '//dapi.kakao.com/v2/maps/sdk.js?appkey=becfe069cca65d679dc79f6ef0a6cee7&libraries=services'
+  kakaoScript.async = true
+  document.head.appendChild(kakaoScript)
+
+  const postcodeScript = document.createElement('script')
+  postcodeScript.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+  postcodeScript.async = true
+  document.head.appendChild(postcodeScript)
+
+  axios.get('/v1/pet/sido').then(res => {
     sidoList.value = res.data.items
 
     // 보호소 정보 불러오기
-    axios.get(`/api/shelter/${shelterNo}`).then(res => {
+    axios.get(`/v1/api/shelter/${shelterNo}`).then(res => {
       form.value = res.data
 
       // 시도/시군구 설정
       const [sidoNm, sigunguNm] = res.data.orgNm.split(' ')
       selectedSido.value = sidoList.value.find(s => s.orgdownNm === sidoNm)
 
+       handleSidoChange()
+       
       // 시군구 불러오기
       if (selectedSido.value) {
-        axios.get('/pet/sigungu', {
-          params: { uprCd: selectedSido.value.orgCd }
-        }).then(sigRes => {
-          sigunguList.value = sigRes.data.items
-          selectedSigungu.value = sigunguList.value.find(g => g.orgdownNm === sigunguNm)
-        })
+      axios.get('v1/pet/sigungu', {
+        params: { uprCd: selectedSido.value.orgCd }
+      }).then(sigRes => {
+        sigunguList.value = sigRes.data.items || []
+        selectedSigungu.value = sigunguList.value.find(g => g.orgdownNm === sigunguNm) || ''
+      })
       }
     })
   })
@@ -110,7 +121,7 @@ const handleSidoChange = () => {
   form.value.orgNm = ''
 
   if (selectedSido.value) {
-    axios.get('/pet/sigungu', {
+    axios.get('/v1/pet/sigungu', {
       params: { uprCd: selectedSido.value.orgCd }
     }).then(res => {
       sigunguList.value = res.data.items
@@ -143,7 +154,7 @@ const openDaumPostcode = () => {
 
 // 폼 제출 (수정)
 const submitForm = () => {
-  axios.put(`/api/shelter/${shelterNo}`, form.value)
+  axios.put(`/v1/api/shelter/${shelterNo}`, form.value)
     .then(() => {
       alert('수정 완료!')
       router.push('/shelter')

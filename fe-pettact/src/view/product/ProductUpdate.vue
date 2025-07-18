@@ -104,7 +104,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProductStore } from '@/stores/product';
-//import { useFileStore } from '@/stores/file';
+import { useFileStore } from '@/stores/file';
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute();

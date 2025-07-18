@@ -2,6 +2,10 @@
   <div class="container mt-5" style="max-width: 500px;">
     <h2 class="text-center mb-4">로그인 하시고 다양한 혜택을 누려보세요</h2>
 
+    <div v-if="errorMessage" style="color:red;">
+      {{ errorMessage }}
+    </div>
+
     <form @submit.prevent="handleLogin">
       <div class="mb-3">
         <label for="userEmail" class="form-label visually-hidden"></label>
@@ -10,7 +14,8 @@
 
       <div class="mb-3">
         <label for="userPassword" class="form-label visually-hidden">비밀번호:</label>
-        <input type="password" v-model="userPassword" id="userPassword" class="form-control" placeholder="비밀번호를 입력해주세요"/>
+        <input type="password" v-model="userPassword" id="userPassword" class="form-control"
+          placeholder="비밀번호를 입력해주세요" />
         <!-- <span class="input-group-text">
           <i class="bi bi-eye"></i>
         </span> -->
@@ -22,8 +27,8 @@
           <label class="form-check-label" for="autoLogin">자동 로그인</label>
         </div>
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="saveId">
-          <label class="form-check-label" for="saveId">아이디 저장</label>
+          <input class="form-check-input" type="checkbox" id="saveEmail" v-model="saveEmail">
+          <label class="form-check-label" for="saveEmail">아이디 저장</label>
         </div>
       </div>
 
@@ -47,13 +52,9 @@
         <button class="btn btn-light border" @click="loginWithKakao">KaKao 로그인</button>
       </div>
     </form>
-      <button @click="logout">
-        로그아웃
-      </button>
-
-    <div v-if="errorMessage" style="color:red;">
-      {{ errorMessage }}
-    </div>
+    <button @click="logout">
+      로그아웃
+    </button>
 
     <div v-if="oauth2ErrorMessage" style="color:red;">
       {{ decodeURIComponent(oauth2ErrorMessage) }}
@@ -62,18 +63,27 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import axios from 'axios';
+import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 
 const userEmail = ref('');
 const userPassword = ref('');
 const errorMessage = ref('');
+const saveEmail = ref(false);
 
 const router = useRouter();
 const route = useRoute();
 const userStore = useUserStore();
+
+// 아이디 저장
+onMounted(() => {
+  const storedEmail = localStorage.getItem('savedEmail');
+  if (storedEmail) {
+    userEmail.value = storedEmail;
+    saveEmail.value = true;
+  }
+});
 
 const errorMessages = {
   EMAIL_ALREADY_EXISTS: "이미 다른 플랫폼(구글/카카오/네이버)으로 가입된 이메일입니다."
@@ -88,6 +98,12 @@ const handleLogin = async () => {
     await userStore.login(userEmail.value, userPassword.value);
     console.log('로그인 성공');
     console.log('토큰' + userStore.accessToken)
+    if (saveEmail.value) {
+      localStorage.setItem('savedEmail', userEmail.value);
+      console.log('저장된 아이디' , userEmail.value)
+    } else {
+      localStorage.removeItem('savedEmail');
+    }
     router.push('/');
   } catch (error) {
     console.error('로그인 실패:', error);

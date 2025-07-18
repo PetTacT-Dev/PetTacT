@@ -17,7 +17,8 @@
 </template>
 
 <script>
-//import axios from "@/js/axios";
+import axios from 'axios';
+
 export default {
   data() {
     return {
@@ -26,26 +27,26 @@ export default {
   },
   mounted() {
     const desertionNo = this.$route.params.desertionNo;
-    axios.get(`/api/abandonment/${desertionNo}`).then((res) => {
+    axios.get(`/v1/api/abandonment/${desertionNo}`).then((res) => {
       this.detail = res.data;
     });
   },
-methods: {
-  updateDetail() {
-    const desertionNo = this.$route.params.desertionNo;
-    axios
-      .put(`/api/abandonment/${desertionNo}`, this.detail)
-      .then((res) => {
-        alert("수정 완료");
-        this.detail = res.data; 
-      })
-      .catch((err) => {
-        console.error("수정 실패", err);
-      });
+  methods: {
+    updateDetail() {
+      const desertionNo = this.$route.params.desertionNo;
+      axios.put(`/v1/api/abandonment/${desertionNo}`, this.detail)
+        .then((res) => {
+          alert('수정 완료');
+          this.detail = res.data;
+        })
+        .catch((err) => {
+          console.error('수정 실패', err);
+        });
     },
     goToList() {
-    this.$router.push('/abandonment');
-    }
+      this.$router.push('/abandonment');
+    },
   },
 };
 </script>
+

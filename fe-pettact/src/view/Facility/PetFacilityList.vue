@@ -59,8 +59,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-//import axios from '@/js/axios'
-//import Pagination from '@/components/Pagination.vue'
+import axios from 'axios'
+import Pagination from '@/components/common/Paginations.vue'
 
 const facilityList = ref([])
 const sidoList = ref([])
@@ -76,7 +76,7 @@ const totalElements = ref(0)
 const searched = ref(false)
 
 const fetchSido = () => {
-  axios.get('/pet/sido').then(res => {
+  axios.get('/v1/pet/sido').then(res => {
     sidoList.value = res.data.items
   })
 }
@@ -86,7 +86,7 @@ const fetchSigungu = () => {
   selectedSigungu.value = ''
   if (!selectedSido.value) return
 
-  axios.get('/pet/sigungu', { params: { uprCd: selectedSido.value } }).then(res => {
+  axios.get('/v1/pet/sigungu', { params: { uprCd: selectedSido.value } }).then(res => {
     sigunguList.value = res.data.items
   })
 }
@@ -101,7 +101,7 @@ const goPage = (targetPage) => {
   if (selectedSigungu.value) params.sigunguCode = selectedSigungu.value
   if (facilityName.value) params.facilityName = facilityName.value
 
-  axios.get('/pet/facility', { params }).then(res => {
+  axios.get('/v1/pet/facility', { params }).then(res => {
     facilityList.value = res.data.content
     totalPages.value = res.data.totalPages
     totalElements.value = res.data.totalElements

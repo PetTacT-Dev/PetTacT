@@ -20,7 +20,7 @@
 
 <script setup>
 import { ref } from 'vue';
-//import axios from '@/js/axios'
+import axios from 'axios'
 
 const emit = defineEmits(['close', 'roomOpen']);
 
@@ -36,7 +36,7 @@ function search() {
   }
 
 
-  axios.get(`/chat/user/${nickName.value}`)
+  axios.get(`/v1/chat/user/${nickName.value}`)
     .then(res => {
       result.value = res.data;
     })
@@ -46,7 +46,7 @@ function search() {
 }
 
 function requestChat() {
-  axios.post(`/chat/room/create/${result.value.userNo}`, null).then(res => {
+  axios.post(`/v1/chat/room/create/${result.value.userNo}`, null).then(res => {
     emit('roomOpen', res.data.roomNo); // 채팅방 번호 전달
     emit('close');
   }).catch(() => {
@@ -68,14 +68,7 @@ function requestChat() {
   justify-content: center;
   z-index: 1000;
 }
-input {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  margin-bottom: 12px;
-  font-size: 14px;
-}
+
 .modal-box {
   background-color: #fff;
   padding: 24px;
