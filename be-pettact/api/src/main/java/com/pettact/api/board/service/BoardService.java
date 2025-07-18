@@ -11,9 +11,6 @@ import com.pettact.api.Category.repository.CategoryRepository;
 import com.pettact.api.file.dto.FileDto;
 import com.pettact.api.file.entity.File;
 import com.pettact.api.file.service.MultiFileService;
-import com.pettact.api.product.dto.ProductDTO;
-import com.pettact.api.product.entity.ProductEntity;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -55,7 +52,7 @@ public class BoardService implements ViewCountSyncable<Long> {
     private BoardRecommendRepository boardRecommendRepository;
     @Autowired
     private ViewCountService viewCountService;
-    @Autowired    
+    @Autowired
     private StringRedisTemplate redisTemplate;
     @Autowired
     private MultiFileService multiFileService;
@@ -185,10 +182,12 @@ public class BoardService implements ViewCountSyncable<Long> {
     public void deleteBoard(Long boardNo, Long userNo) {
         Board board = boardRepository.findById(boardNo)
                 .orElseThrow(() -> new IllegalArgumentException("게시글 정보를 찾을 수 없습니다. No: " + boardNo));
+
         if (!board.getUser().getUserNo().equals(userNo)) {
             throw new IllegalArgumentException("해당 사용자가 아닙니다. 삭제를 할 수 없습니다.");
         }
-        boardRepository.deleteById(boardNo);
+
+        boardRepository.delete(board);
     }
 
     @Transactional(readOnly = true)
@@ -198,6 +197,10 @@ public class BoardService implements ViewCountSyncable<Long> {
 
     @Transactional(readOnly = true)
     public Page<BoardResponseDto> findBoardsByCategory(Long categoryNo, Pageable pageable, String searchKeyword) {
+        System.out.println("🔍 서비스 호출:");
+        System.out.println("  - categoryNo: " + categoryNo);
+        System.out.println("  - pageable: " + pageable);
+        System.out.println("  - searchKeyword: [" + searchKeyword + "]");
 
         BoardCategory boardCategory = categoryRepository.findById(categoryNo)
                 .orElseThrow(() -> new IllegalArgumentException("해당 카테고리를 찾을 수 없습니다. No: " + categoryNo));
@@ -205,12 +208,18 @@ public class BoardService implements ViewCountSyncable<Long> {
         Page<Board> boards;
 
         if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
-            System.out.println("검색 실행");
+            System.out.println("✅ 검색 실행");
             boards = boardRepository.searchBoardsByCategory(categoryNo, searchKeyword.trim(), pageable);
         } else {
-            System.out.println("일반 조회 실행");
+            System.out.println("✅ 일반 조회 실행");
             boards = boardRepository.findBoardsByCategoryNo(categoryNo, pageable);
         }
+
+        System.out.println("📊 Repository 결과:");
+        System.out.println("  - totalElements: " + boards.getTotalElements());
+        System.out.println("  - totalPages: " + boards.getTotalPages());
+        System.out.println("  - currentPage: " + boards.getNumber());
+        System.out.println("  - pageSize: " + boards.getSize());
 
         return boards.map(board -> {
             BoardResponseDto dto = BoardResponseDto.fromEntity(board);
@@ -221,29 +230,29 @@ public class BoardService implements ViewCountSyncable<Long> {
     }
 
     // ------------------ 게시글 조회수 db 갱신------------------
-    
+
     @Override
     @Transactional
     public void updateViewCount(Long boardNo, int count) {
-    	boardRepository.updateViewCount(boardNo, count);
+        boardRepository.updateViewCount(boardNo, count);
     }
-    
-    // ------------------ 인기 게시글 TOP 10 ------------------    
+
+    // ------------------ 인기 게시글 TOP 10 ------------------
     public List<BoardResponseDto> getPopularBoards(Long categoryNo, int count) {
         List<String> dateKeys = IntStream.rangeClosed(0, 6)
-            .mapToObj(i -> {
-                String date = LocalDate.now().minusDays(i).toString();
-                return (categoryNo == null)
-                    ? "board:popular:" + date
-                    : "board:popular:" + categoryNo + ":" + date;
-            })
-            .toList();
+                .mapToObj(i -> {
+                    String date = LocalDate.now().minusDays(i).toString();
+                    return (categoryNo == null)
+                            ? "board:popular:" + date
+                            : "board:popular:" + categoryNo + ":" + date;
+                })
+                .toList();
 
         String tempKey = "board:popular:temp:" + UUID.randomUUID();
         redisTemplate.opsForZSet().unionAndStore(dateKeys.get(0), dateKeys.subList(1, dateKeys.size()), tempKey);
 
         Set<String> boardNos = redisTemplate.opsForZSet()
-            .reverseRange(tempKey, 0, count - 1);
+                .reverseRange(tempKey, 0, count - 1);
 
         redisTemplate.delete(tempKey);
 
@@ -253,13 +262,13 @@ public class BoardService implements ViewCountSyncable<Long> {
         List<Board> boards = boardRepository.findAllById(ids);
 
         Map<Long, Board> boardMap = boards.stream()
-            .collect(Collectors.toMap(Board::getBoardNo, Function.identity()));
+                .collect(Collectors.toMap(Board::getBoardNo, Function.identity()));
 
         return ids.stream()
-            .map(boardMap::get)
-            .filter(Objects::nonNull)
-            .map(BoardResponseDto::fromEntity)
-            .toList();
+                .map(boardMap::get)
+                .filter(Objects::nonNull)
+                .map(BoardResponseDto::fromEntity)
+                .toList();
     }
 
 }

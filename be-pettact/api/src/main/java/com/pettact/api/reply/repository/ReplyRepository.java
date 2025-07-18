@@ -12,8 +12,19 @@ import java.util.List;
 @Repository
 public interface ReplyRepository extends JpaRepository<Reply, Long> {
 
+//    @Query("SELECT r FROM Reply r WHERE r.board.boardNo = :boardNo")
+//    List<Reply> findRepliesByBoardNo(@Param("boardNo") Long boardNo);
+
+    // ✅ 기존 JPQL 쿼리
     @Query("SELECT r FROM Reply r WHERE r.board.boardNo = :boardNo")
     List<Reply> findRepliesByBoardNo(@Param("boardNo") Long boardNo);
+
+    // ✅ 네이티브 쿼리로 테스트
+    @Query(value = "SELECT * FROM reply WHERE board_no = :boardNo ORDER BY created_at", nativeQuery = true)
+    List<Reply> findRepliesByBoardNoNative(@Param("boardNo") Long boardNo);
+
+    // ✅ Spring Data JPA 메서드 쿼리
+    List<Reply> findByBoard_BoardNoOrderByCreatedAt(Long boardNo);
 
     boolean existsByParentReply_ReplyNo(Long replyNo);
 
