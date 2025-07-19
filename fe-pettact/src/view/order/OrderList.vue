@@ -1,28 +1,28 @@
 <template>
-  <div class="container py-4">
-    <h2 class="mb-4">주문 목록</h2>
-    <div v-if="user" class="mb-4 p-3 bg-light rounded">
-      <ul class="mb-0">
+  <div class="container py-4 product-list-wrapper">
+    <h2 class="mb-4 text-center">주문 목록</h2>
+
+    <div v-if="user" class="mb-4 p-3 bg-light rounded user-info-box">
+      <ul class="mb-0 user-info-list">
         <li><strong>이메일:</strong> {{ user.userEmail }}</li>
         <li><strong>닉네임:</strong> {{ user.userNickname }}</li>
-        <!-- <li><strong>권한:</strong> {{ user.value.userRole }}</li> -->
       </ul>
     </div>
-    <div class="mb-3">
-      <button v-if="isLoggedIn" @click="goToList" class="btn btn-secondary me-2">상품 목록</button>
-      <button v-if="isLoggedIn" @click="goToCart" class="btn btn-secondary">장바구니</button>
+
+    <div class="mb-3 d-flex gap-2 justify-content-center">
+      <button v-if="isLoggedIn" @click="goToList" class="btn btn-primary btn-sm">상품 목록</button>
+      <button v-if="isLoggedIn" @click="goToCart" class="btn btn-primary btn-sm">장바구니</button>
     </div>
 
-
-    <div class="table-responsive">
-      <table class="table table-striped table-bordered align-middle">
-        <thead class="table-light">
+    <div class="table-responsive shadow-sm rounded">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-primary">
           <tr>
-            <th>주문일</th>
-            <th>상품명</th>
-            <th>주문 번호</th>
-            <th>주문 금액</th>
-            <th>주문 관리</th>
+            <th scope="col">주문일</th>
+            <th scope="col">상품명</th>
+            <th scope="col">주문 번호</th>
+            <th scope="col">주문 금액</th>
+            <th scope="col">주문 관리</th>
           </tr>
         </thead>
         <tbody>
@@ -30,59 +30,67 @@
             <td>{{ formatDate(order.createdAt) }}</td>
             <td>
               <ul class="list-unstyled mb-0">
-                <li v-for="product in order.orderDetailList" :key="product.orderDetailNo" class="d-flex align-items-center mb-2">
+                <li
+                  v-for="product in order.orderDetailList"
+                  :key="product.orderDetailNo"
+                  class="d-flex align-items-center mb-2 product-name-item"
+                >
                   <img
                     v-if="product.imageUrl"
                     :src="getImageUrl(product.imageUrl)"
                     alt="상품 이미지"
-                    class="me-2"
-                    style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
+                    class="product-image rounded"
                   />
-                  <router-link :to="`/order/${order.orderNo}`" class="text-decoration-none">
+                  <router-link :to="`/order/${order.orderNo}`" class="text-decoration-none fw-semibold text-dark">
                     {{ product.productName }}
                   </router-link>
                 </li>
               </ul>
             </td>
             <td>
-              <router-link :to="`/order/${order.orderNo}`" class="text-decoration-none">
+              <router-link :to="`/order/${order.orderNo}`" class="text-decoration-none fw-semibold text-primary">
                 {{ order.orderNo }}
               </router-link>
             </td>
-            <td>{{ order.totalPrice.toLocaleString() }} 원</td>
+            <td class="text-end fw-bold">{{ order.totalPrice.toLocaleString() }} 원</td>
             <td>
-              <button v-if="isLoggedIn"
-                @click="cancelOrder(order.orderNo)" 
-                :disabled="orderStore.loading" 
-                class="btn btn-secondary btn-sm"
+              <button
+                v-if="isLoggedIn"
+                @click="cancelOrder(order.orderNo)"
+                :disabled="orderStore.loading"
+                class="btn btn-outline-danger btn-sm"
               >
                 주문 취소
               </button>
             </td>
           </tr>
+          <tr v-if="orders.length === 0">
+            <td colspan="5" class="text-center text-muted py-4">주문 내역이 없습니다.</td>
+          </tr>
         </tbody>
       </table>
     </div>
+
+    <!-- 페이지네이션 -->
+    <nav v-if="totalPages > 1" class="mt-4">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" :class="{ disabled: currentPage === 0 }">
+          <button class="page-link" @click="fetchPage(currentPage - 1)">이전</button>
+        </li>
+        <li
+          class="page-item"
+          v-for="page in totalPages"
+          :key="page"
+          :class="{ active: page - 1 === currentPage }"
+        >
+          <button class="page-link" @click="fetchPage(page - 1)">{{ page }}</button>
+        </li>
+        <li class="page-item" :class="{ disabled: currentPage === totalPages - 1 }">
+          <button class="page-link" @click="fetchPage(currentPage + 1)">다음</button>
+        </li>
+      </ul>
+    </nav>
   </div>
-        <!-- ✅ 페이지네이션 -->
-      <nav v-if="totalPages > 1" class="mt-4">
-        <ul class="pagination justify-content-center">
-          <li class="page-item" :class="{ disabled: currentPage === 0 }">
-            <button class="page-link" @click="fetchPage(currentPage - 1)">이전</button>
-          </li>
-          <li 
-            class="page-item"
-            v-for="page in totalPages"
-            :key="page"
-            :class="{ active: page - 1 === currentPage }"
-          >
-            <button class="page-link" @click="fetchPage(page - 1)">{{ page }}</button>
-          </li>
-          <li class="page-item" :class="{ disabled: currentPage === totalPages - 1 }">
-            <button class="page-link" @click="fetchPage(currentPage + 1)">다음</button>
-          </li>
-        </ul>
-      </nav>
 </template>
 
 
@@ -159,33 +167,89 @@ const cancelOrder = async (orderNo) => {
 </script>
 
 <style scoped>
-table {
-  width: 100%;
-  border-collapse: collapse;
+.product-list-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  color: #222;
+  font-family: 'Pretendard', sans-serif;
 }
-th, td {
-  padding: 10px;
-  border: 1px solid #ddd;
-  text-align: left;
+
+.user-info-box {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
 }
-ul {
-  padding-left: 16px;
-  margin: 0;
-  list-style-type: disc;
+
+.user-info-list strong {
+  color: #555;
 }
-button[disabled] {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
+
 .product-image {
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   object-fit: cover;
-  margin-right: 8px;
-  vertical-align: middle;
+  margin-right: 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
 }
-.pagination {
-  list-style: none;
-  padding-left: 0; /* 부트스트랩에서는 이거도 초기화되어 있어야 정렬이 맞음 */
+
+.product-name-item {
+  font-weight: 500;
+}
+
+.table {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table th,
+.table td {
+  vertical-align: middle !important;
+}
+
+.table-primary {
+  background-color: #008be6;
+  color: white;
+}
+
+.btn-primary {
+  background-color: #008be6;
+  border-color: #008be6;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #006bb3;
+  border-color: #006bb3;
+}
+
+.btn-outline-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+  font-weight: 600;
+}
+
+.btn-outline-danger:hover:not(:disabled) {
+  background-color: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #008be6;
+  border-color: #008be6;
+  color: white;
+}
+
+.pagination .page-link {
+  color: #008be6;
+  font-weight: 600;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #ccc;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 </style>

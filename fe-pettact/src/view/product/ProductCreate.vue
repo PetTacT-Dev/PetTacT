@@ -1,5 +1,7 @@
 <template>
-  <div class="container py-4 text-white">
+  
+<div class="product-form-wrapper">
+  <div class="container py-4 text-black">
     <h2 class="mb-4 text-center">상품 등록</h2>
 
     <form @submit.prevent="submitForm" class="row g-3">
@@ -59,6 +61,7 @@
       </div>
     </form>
   </div>
+</div>
 </template>
 
 
@@ -168,4 +171,98 @@ onMounted(async () => {
 });
 
 </script>
+
+<style scoped>
+
+@import url('https://fonts.googleapis.com/css2?family=Paytone+One&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css');
+
+.product-form-wrapper {
+  max-width: 1000px;
+  margin: 3rem auto;
+  padding: 0 1rem;
+}
+
+form {
+  background-color: white;
+  padding: 2.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  width: 100%;
+}
+
+.container {
+  font-family: 'Pretendard', sans-serif;
+  color: #333;
+}
+
+h2 {
+  font-weight: 700;
+  font-family: 'Pretendard', sans-serif;
+}
+
+form {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* 라벨 스타일 */
+.form-label {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #444;
+}
+
+/* 입력창 / 셀렉트 */
+.form-control,
+.form-select {
+  border-radius: 6px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  font-family: 'Pretendard', sans-serif;
+  padding: 0.5rem 0.75rem;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #008BE6;
+  box-shadow: 0 0 0 0.2rem rgba(0, 139, 230, 0.2);
+  outline: none;
+}
+
+/* 버튼 스타일 */
+.btn-secondary {
+  background-color: #008BE6;
+  border: none;
+  color: white;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: #0074c7;
+}
+
+/* 파일 선택 영역 */
+input[type="file"].form-control {
+  padding: 0.4rem 0.5rem;
+  font-size: 14px;
+}
+
+/* 반응형 여백 조정 */
+@media (max-width: 768px) {
+  form {
+    padding: 1.5rem;
+  }
+}
+
+
+</style>
 
