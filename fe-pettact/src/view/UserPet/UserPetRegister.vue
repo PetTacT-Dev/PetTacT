@@ -53,7 +53,6 @@ const router = useRouter();
 const pet = ref({
   kindCd: '',
   kindNm: '',
-  speciesCode: '',
   petName: '',
   petGender: '',
   isNeutered: '',
@@ -69,7 +68,6 @@ const kindList = ref([]);
 const fetchKinds = () => {
   pet.value.kindCd = '';
   pet.value.kindNm = '';
-  pet.value.speciesCode = '';
   kindList.value = [];
 
   if (!selectedUpKindCd.value) return;
@@ -85,7 +83,6 @@ const handleKindChange = () => {
   const selected = kindList.value.find(k => k.kindCd === pet.value.kindCd);
   if (selected) {
     pet.value.kindNm = selected.kindNm;
-    pet.value.speciesCode = selectedUpKindCd.value;
   }
 };
 
