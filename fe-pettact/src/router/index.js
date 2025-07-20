@@ -8,8 +8,11 @@ import petRoutes from "./pet/petRoutes";
 import boardRoutes from "./board/boardRoutes";
 import categoryRoutes from "./board/categoryRoutes";
 import userPetRoutes from "./pet/userPetRoutes";
+import Main from "@/components/Main.vue";
 
 const routes = [
+  { path: "/", name: "Main", component: Main },
+
   ...userRoutes,
   ...mypageRoutes,
   ...adminRoutes,
