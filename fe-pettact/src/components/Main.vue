@@ -1083,7 +1083,7 @@ export default {
 
 /* 오른쪽 버튼 컨테이너 */
 .features-buttons {
-  width: 532px; /* 오른쪽 버튼 영역 고정 너비 */
+  width: 360px; /* 오른쪽 버튼 영역 고정 너비 */
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -1159,14 +1159,16 @@ export default {
   width: 100%;
   height: 280px;
   background: linear-gradient(180deg, #FFE5E5 0%, #FFB3B3 100%);
+  border: 1px solid #BFE6FF;
   border-radius: 12px;
-  padding: 22px 25px;
+  padding: 30px 25px;
   position: relative;
   cursor: pointer;
   transition: transform 0.3s ease;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  margin-bottom: 60px;
 }
 
 .diary-button:hover {
