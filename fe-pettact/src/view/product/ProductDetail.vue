@@ -1,5 +1,6 @@
 <template>
   <div class="container py-4">
+  <div class="product-detail-wrapper">
     <div v-if="productStore.productDetail" class="card shadow p-4">
       <h1 class="card-title mb-4">{{ productStore.productDetail.productName }}</h1>
 
@@ -11,7 +12,7 @@
           :src="getImageUrl(url)"
           alt="상품 이미지"
           class="img-thumbnail"
-          style="width: 200px; height: 200px; object-fit: cover;"
+          style="width: 450px; height: 450px; object-fit: cover;"
         />
       </div>
 
@@ -60,6 +61,7 @@
 
     <div v-else-if="productStore.loading" class="text-center py-5">⏳ 상품 정보를 불러오는 중...</div>
     <div v-else-if="productStore.error" class="text-center text-danger py-5">❌ 상품 정보를 불러오는데 실패했습니다.</div>
+  </div>
   </div>
 </template>
 
@@ -143,3 +145,78 @@ onMounted(() => {
 })
 
 </script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Paytone+One&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css');
+
+.product-detail-wrapper {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+/* 전체 폰트 및 카드 정리 */
+.container {
+  font-family: 'Pretendard', sans-serif;
+  color: #333;
+}
+
+.card {
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: none;
+}
+
+.card-title {
+  font-size: 20px;
+  font-weight: 700;
+  font-family: 'Pretendard', sans-serif;
+  margin-bottom: 1rem;
+}
+
+/* 이미지 썸네일 정리 */
+.img-thumbnail {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* 리스트 그룹 스타일 통일 */
+.list-group-item {
+  font-size: 15px;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 12px 0;
+  background-color: transparent;
+}
+
+/* 마지막 항목 border 제거 */
+.list-group-item:last-child {
+  border-bottom: none;
+}
+
+/* 버튼 스타일 재사용 */
+.btn-secondary {
+  background-color: #008BE6;
+  border: none;
+  color: white;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: #0074c7;
+}
+
+/* 에러 / 로딩 텍스트 */
+.text-danger {
+  font-weight: 500;
+}
+
+.text-center {
+  font-family: 'Pretendard', sans-serif;
+}
+</style>
