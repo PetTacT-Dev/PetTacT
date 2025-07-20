@@ -45,7 +45,7 @@
     <div v-if="isPinned" @click="closeDropdown" class="overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 998; background: transparent;"></div>
 
     <!-- 게시판 생성 버튼 -->
-    <div class="category-actions">
+    <div v-if="isAdmin" class="category-actions">
       <button @click="goToCreateCategory" class="create-btn">
         새 게시판 만들기
       </button>
@@ -132,7 +132,7 @@ export default {
 
     const editCategory = (category) => {
       console.log('수정:', category)
-      router.push(`/boardCategoryForm?edit=${category.boardCategoryNo}`)
+      router.push(`/boardCategory/${category.boardCategoryNo}/edit`)
       closeDropdown()
     }
 

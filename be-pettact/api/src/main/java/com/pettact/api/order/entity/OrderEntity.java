@@ -11,6 +11,7 @@ import com.pettact.api.payment.entity.PaymentEntity;
 import com.pettact.api.user.entity.Users;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -39,6 +40,9 @@ public class OrderEntity extends BaseEntity {
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderNo;
+    
+    @Column(name = "order_id", unique = true)
+    private String orderId; //결제 아이디
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_no")

@@ -133,4 +133,7 @@ public class PetAbandonmentTmpEntity {
     private String evntTxt;
 
     private LocalDateTime updTm;  // yyyy-MM-dd HH:mm:ss.S
+    
+    @Column(name = "pet_view_cnt", nullable = false)
+    private int petViewCnt = 0;
 }

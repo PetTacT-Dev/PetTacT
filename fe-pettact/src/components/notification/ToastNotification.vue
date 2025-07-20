@@ -90,7 +90,9 @@ watch(toasts, (newVal) => {
   position: relative;
   width: 100%;
   display: flex;
-  justify-content: right;
+  flex-direction: column; /* 세로 정렬 */
+  justify-content: flex-start; /* 위쪽부터 시작 */
+  align-items: flex-end; /* 오른쪽 정렬 */
   margin-top: 120px;
 }
 

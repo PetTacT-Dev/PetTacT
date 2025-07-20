@@ -2,7 +2,7 @@
   <div class="navbar">
     <div class="logo" @click="goHome">PETTACT</div>
     <div class="menu">
-      <div class="menu-item">유기동물 조회</div>
+      <div class="menu-item" @click="goToPetAbandonmentList">유기동물 조회</div>
       <div class="menu-item" @click="goToUserPet">반려동물</div>
       <div class="menu-item">쇼핑몰</div>
       <div class="menu-item" @click="goToBoardCategoryList">커뮤니티</div>
@@ -14,6 +14,15 @@
         <div class="notification-area">
             <NotificationDropdown />
         </div>
+
+         <div class="chat-area">
+    <button @click="openChatModal" class="chat-button">
+      <span class="chat-icon">💬</span>
+      <span class="chat-text">채팅</span>
+      <!-- 읽지 않은 메시지 배지 (옵션) -->
+      <span v-if="unreadCount > 0" class="unread-badge">{{ unreadCount }}</span>
+    </button>
+  </div>
 
         <!-- 👤 사용자 드롭다운 -->
         <div class="user-profile" ref="profileDropdownRef" @click="toggleProfileDropdown">
@@ -41,13 +50,15 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import NotificationDropdown from './notification/NotificationDropdown.vue';
+import { useModalStore } from '@/js/modalStore'
 
 const router = useRouter();
 const userStore = useUserStore();
+const modalStore = useModalStore();
 
 const isProfileDropdownOpen = ref(false);
-
 const profileDropdownRef = ref(null);
+const unreadChatCount = ref(0);
 
 const isLoggedIn = computed(() => userStore.accessToken !== null);
 const userNickname = computed(() => userStore.user?.userNickname || '사용자님');
@@ -62,6 +73,12 @@ const goToBoardCategoryList = () => router.push('/boardCategoryList');
 const goToMyInfo = () => router.push({ name: 'myInfo' });
 const goToUpdateProfile = () => router.push('/user/update');
 const goToAdminDashboard = () => router.push({ name: 'adminDashboard' });
+const goToPetAbandonmentList = () => router.push({ name: 'abandonmentList' });
+
+// 채팅 모달 열기
+const openChatModal = () => {
+  modalStore.openMessageModal();
+};
 
 // 토글 함수
 const toggleProfileDropdown = () => {
@@ -79,9 +96,29 @@ const handleClickOutside = (e) => {
   }
 };
 
+// 읽지 않은 채팅 메시지 수 확인 (옵션)
+const fetchUnreadChatCount = async () => {
+  if (!isLoggedIn.value) return;
+  
+  try {
+    // API 호출해서 읽지 않은 메시지 수 가져오기
+    // const response = await axios.get('/v1/chat/unread-count');
+    // unreadChatCount.value = response.data;
+  } catch (err) {
+    console.error('읽지 않은 채팅 수 조회 실패:', err);
+  }
+};
+
+// 생명주기 - 한 번만 선언
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  
+  // 로그인 상태면 읽지 않은 채팅 수 확인
+  if (isLoggedIn.value) {
+    fetchUnreadChatCount();
+  }
 });
+
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside);
 });
@@ -221,6 +258,82 @@ const logout = () => {
   color: #333;
   font-weight: 500;
   user-select: none;
+}
+
+
+.chat-area {
+  position: relative;
+}
+
+/* 채팅 버튼 */
+.chat-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid #e1e8ed;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+  min-height: 36px;
+}
+
+.chat-button:hover {
+  background: #f8fafe;
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.chat-button:active {
+  transform: translateY(0);
+}
+
+/* 채팅 아이콘 */
+.chat-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* 채팅 텍스트 */
+.chat-text {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 읽지 않은 메시지 배지 */
+.unread-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: white;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.2;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+/* 채팅 버튼이 활성화된 상태 (모달이 열린 상태) */
+.chat-button.active {
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+}
+
+.chat-button.active:hover {
+  background: #5a67d8;
+  border-color: #5a67d8;
 }
 
 /* 드롭다운 메뉴 */

@@ -232,7 +232,6 @@ import axios from 'axios'
 const route = useRoute()
 const router = useRouter()
 
-// boardId -> boardNo로 변경
 const boardNo = route.params.boardNo
 const board = ref(null)
 const loading = ref(true)
@@ -287,28 +286,43 @@ const formatFileSize = (bytes) => {
 const fetchData = async () => {
   loading.value = true
   try {
-    // 1. 게시글 정보 조회 - boardNo 사용
+    // 게시글 조회
     const boardResponse = await axios.get(`/v1/board/${boardNo}`)
     board.value = boardResponse.data
-    
-    // 폼 데이터 설정
+
+    // 폼 데이터 채우기
     formData.value.boardTitle = board.value.boardTitle
     formData.value.boardContent = board.value.boardContent
-    
-    // 2. 카테고리 정보 설정
-    if (board.value.categoryNo) {
-      const categoryResponse = await axios.get(`/v1/board-categories/${board.value.categoryNo}`)
+
+    // ✅ categoryNo를 유연하게 추출
+    const categoryNo = board.value.categoryNo || board.value.responseDto?.boardCategoryNo
+    console.log('✅ 추출된 categoryNo:', categoryNo)
+
+    // ✅ 카테고리 정보 API 호출
+    if (categoryNo) {
+      const categoryResponse = await axios.get(`/v1/board-categories/${categoryNo}`)
+      console.log('✅ 카테고리 응답:', categoryResponse.data)
+
+      // ✅ DB 값으로 덮어쓰기
       categoryInfo.value = {
-        title: categoryResponse.data.boardCategoryTitle || '게시판'
+        title: categoryResponse.data.boardCategoryTitle || '게시판',
+        allowImages: categoryResponse.data.boardAllowImage,
+        allowAttachments: categoryResponse.data.boardAllowAttachment,
+        maxImageCount: categoryResponse.data.boardMaxImageCount,
+        maxFileSize: categoryResponse.data.boardMaxFileSize
       }
+
+      console.log('✅ 최종 categoryInfo:', categoryInfo.value)
+    } else {
+      console.warn('⚠️ categoryNo가 없습니다. categoryInfo 세팅되지 않음')
     }
-    
-    // 3. 첨부파일 조회 (상세조회와 동일한 방식)
+
+    // 첨부파일 조회
     try {
       const filesResponse = await axios.get(`/v1/multifile`, {
         params: {
           referenceTable: 'BOARD',
-          referenceNo: boardNo  // boardNo 사용
+          referenceNo: boardNo
         }
       })
 
@@ -316,30 +330,25 @@ const fetchData = async () => {
       const responseData = filesResponse.data
       if (Array.isArray(responseData)) {
         files = responseData
-      } else if (responseData && Array.isArray(responseData.data)) {
+      } else if (Array.isArray(responseData?.data)) {
         files = responseData.data
-      } else if (responseData && Array.isArray(responseData.content)) {
+      } else if (Array.isArray(responseData?.content)) {
         files = responseData.content
-      } else {
-        files = []
       }
-      
-      // 파일 분리 (상세조회와 동일한 방식)
-      currentImages.value = files.filter(file => 
-        file && file.fileMimeType && file.fileMimeType.startsWith('image/')
-      )
-      currentFiles.value = files.filter(file => 
-        file && file.fileMimeType && !file.fileMimeType.startsWith('image/')
-      )
 
+      currentImages.value = files.filter(file =>
+        file?.fileMimeType?.startsWith('image/')
+      )
+      currentFiles.value = files.filter(file =>
+        file?.fileMimeType && !file.fileMimeType.startsWith('image/')
+      )
     } catch (fileError) {
-      console.log('파일 조회 실패 (정상 - 파일 없음):', fileError)
+      console.warn('파일 조회 실패 (정상일 수 있음):', fileError)
       currentImages.value = []
       currentFiles.value = []
     }
-    
-  } catch (e) {
-    console.error('게시글 조회 실패:', e)
+  } catch (error) {
+    console.error('게시글 조회 실패:', error)
     board.value = null
   } finally {
     loading.value = false
@@ -423,7 +432,6 @@ const removeCurrentFile = (fileNo) => {
   }
 }
 
-// 폼 제출
 const submitForm = async () => {
   if (!isFormValid.value || isSubmitting.value) return
   
@@ -432,6 +440,9 @@ const submitForm = async () => {
   try {
     const formDataObj = new FormData()
     
+    const categoryNo = board.value?.responseDto?.boardCategoryNo
+    console.log('categoryNo from board:', categoryNo)
+    
     // BoardCreateDto를 JSON으로 전송
     const boardData = {
       boardTitle: formData.value.boardTitle,
@@ -439,31 +450,31 @@ const submitForm = async () => {
     }
     formDataObj.append('data', new Blob([JSON.stringify(boardData)], { type: 'application/json' }))
     
-    // 새 파일들 추가
     const allNewFiles = [...newImages.value.map(img => img.file), ...newFiles.value]
     allNewFiles.forEach(file => {
       formDataObj.append('files', file)
     })
-    
-    // 삭제할 파일 ID들 추가
+
     if (deletedFileIds.value.length > 0) {
       deletedFileIds.value.forEach(id => {
         formDataObj.append('deletedFileIds', id)
       })
     }
 
-       // ✅ 삭제된 이미지/파일 id 리스트 콘솔 확인
     console.log("삭제된 파일 ID 목록:", deletedFileIds.value);
     
-    // axios로 직접 PUT 요청 - boardNo 사용
     await axios.put(`/v1/board/${boardNo}`, formDataObj, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     })
     
-    // 성공 시 상세 페이지로 이동
-    router.push(`/board/${boardNo}`)
+    if (categoryNo) {
+      router.push(`/board/${categoryNo}`)  // 카테고리 목록으로
+    } else {
+      router.push(`/board/${boardNo}`)     // 게시글 상세로
+    }
+    
   } catch (error) {
     console.error('게시글 수정 실패:', error)
     alert('게시글 수정 중 오류가 발생했습니다.')
@@ -471,6 +482,7 @@ const submitForm = async () => {
     isSubmitting.value = false
   }
 }
+
 </script>
 
 <style scoped>

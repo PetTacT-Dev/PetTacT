@@ -30,6 +30,8 @@ public class ReplyResponseDto {
     // Reply -> ReplyResponseDto로 변환
     private List<ReplyResponseDto> childReplies;
     private int recommendCount;
+    private int depth;  // 댓글 깊이 (들여쓰기용)
+
 
 
     public static ReplyResponseDto fromEntity(Reply savedReply) {
@@ -43,6 +45,7 @@ public class ReplyResponseDto {
                 savedReply.getUpdatedAt(),
                 savedReply.getParentReply() != null ? savedReply.getParentReply().getReplyNo() : null,
                 new ArrayList<>(),
+                0,
                 0
         );
     }

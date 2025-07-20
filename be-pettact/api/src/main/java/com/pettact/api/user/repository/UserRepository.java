@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -80,6 +81,18 @@ public interface UserRepository extends JpaRepository<Users, Long> {
     @Query("SELECT COUNT(u) FROM Users u WHERE u.statusCode.codeId = 'STATUS_PENDING' AND u.isDeleted = false")
     long countPendingSellers();
 
+    @Query("""
+    	    SELECT u FROM Users u
+    	    WHERE u.statusCode.codeId = 'STATUS_PENDING'
+    	    AND u.isDeleted = false
+    	    ORDER BY u.createdAt DESC
+    	""")
+    	List<Users> findTopPendingSellers(Pageable pageable);
+
+    	default List<Users> findTopPendingSellers(int limit) {
+    	    return findTopPendingSellers(PageRequest.of(0, limit));
+    	}
+    
     @Query("SELECT COUNT(u) FROM Users u WHERE DATE(u.createdAt) = CURRENT_DATE " +
     		"AND u.statusCode.codeId IN ('STATUS_ACTIVE', 'STATUS_PENDING')")
     long countTodayNewUsers();

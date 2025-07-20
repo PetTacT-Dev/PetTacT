@@ -22,6 +22,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -150,17 +152,24 @@ public class MultiFileController {
             FileDto fileDto = multiFileService.getFile(fileNo);
 
             Path filePath = Paths.get(fileDto.getFilePath());
-            Resource resource = new UrlResource(filePath.toUri());
-
-            if (!resource.exists() || !resource.isReadable()) {
+            if (!Files.exists(filePath) || !Files.isReadable(filePath)) {
                 throw new RuntimeException("파일을 읽을 수 없습니다.");
             }
+
+            Resource resource = new UrlResource(filePath.toUri());
+
+            String encodedFileName = URLEncoder.encode(fileDto.getFileName(), StandardCharsets.UTF_8)
+                    .replaceAll("\\+", "%20");
 
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"" + fileDto.getFileName() + "\"")
+                            "attachment; filename*=UTF-8''" + encodedFileName)
+                    .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(resource.contentLength()))
+                    .header("X-Content-Type-Options", "nosniff")
+                    .header("X-Frame-Options", "DENY")
                     .body(resource);
+
         } catch (Exception e) {
             log.error("파일 다운로드 실패: fileNo={}", fileNo, e);
             throw new RuntimeException("파일 다운로드 중 오류가 발생했습니다.");

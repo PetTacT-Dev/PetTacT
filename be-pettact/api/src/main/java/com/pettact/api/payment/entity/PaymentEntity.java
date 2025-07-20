@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -31,7 +32,11 @@ public class PaymentEntity {
 	private String paymentKey; // 토스에서 전달한 고유 결제 키
 	
 	@Column(nullable = false)
-	private String orderId; // 주문번호 (우리가 정한 주문 ID)
+	private String orderId; // toss번호 
+	
+	@OneToOne
+	@JoinColumn(name = "order_no")
+	private OrderEntity order;; // 주문번호 (우리가 정한 주문 ID)
 	
 
     @Column(nullable = false)
@@ -58,8 +63,8 @@ public class PaymentEntity {
 		        .build();		
 	}
 	
-	@OneToOne(mappedBy = "payment")
-	private OrderEntity order;
+//	@OneToOne(mappedBy = "payment")
+//	private OrderEntity order;
 
 	
 }
