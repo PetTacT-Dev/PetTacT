@@ -17,14 +17,13 @@ export const useOrderStore = defineStore('order', {
   actions: {
 
     // ✅ 결제 승인 요청
-    async confirmPayment({ paymentKey, orderId, orderNo, amount }) {
-          console.log("📤 confirmPayment 인자:", { paymentKey, orderId, orderNo, amount });
+    async confirmPayment({ paymentKey, orderId, amount }) {
+          console.log("📤 confirmPayment 인자:", { paymentKey, orderId, amount });
 
           try {
             const res = await axios.post('/v1/payments/confirm', {
               paymentKey,
               orderId,
-              orderNo,
               amount
             });
 
