@@ -99,12 +99,12 @@
             </div>
 
             <div class="adoption-content">
-              <div class="adoption-row">
-                <div
-                  v-for="a in abandonments"
-                  :key="a.desertionNo"
-                  class="pet-card"
-                >
+              <div
+                v-for="(row, rowIndex) in chunkedAbandonments"
+                :key="rowIndex"
+                class="adoption-row"
+              >
+                <div v-for="a in row" :key="a.desertionNo" class="pet-card">
                   <div class="pet-image">
                     <img
                       :src="a.popfile1 || '/image/no-image.png'"
@@ -152,37 +152,6 @@
       </div>
     </section>
 
-    <!-- 마감 임박 리스트 (기본 표시) -->
-   <section class="adoption-section" v-if="!searched && defaultPets.length > 0">
-  <div class="adoption-container">
-    <div class="adoption-header">
-      <h2 class="adoption-title">입양 마감 임박 동물들</h2>
-      <p class="adoption-subtitle">입양 마감일이 가까운 아이들을 소개해요.</p>
-    </div>
-    <div class="adoption-row">
-      <div v-for="a in defaultPets" :key="a.desertionNo" class="pet-card">
-        <div class="pet-image">
-          <img :src="a.popfile1 || '/image/no-image.png'" alt="사진" />
-        </div>
-        <div class="pet-info">
-          <div class="pet-tags">
-            <span class="tag tag-dark">{{ a.sexCd }} / {{ a.age }}</span>
-            <span class="tag tag-light">{{ a.kindCd }}</span>
-          </div>
-          <div class="pet-details">
-            <div class="pet-details-content">
-              <div class="pet-name">No. {{ a.desertionNo }}</div>
-              <div class="pet-location">{{ a.happenPlace }}</div>
-              <div class="pet-description">{{ a.noticeSdt }} ~ {{ a.noticeEdt }}</div>
-            </div>
-            <button @click="DetailView(a.desertionNo)" class="pet-button">상세보기</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
     <!-- FAQ -->
     <section class="faq-section">
       <div class="faq-container">
@@ -210,6 +179,52 @@
               {{ faq.answer }}
             </div>
             <button class="faq-button">입양 보호소 전화하기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 마감 임박 리스트 (기본 표시) -->
+    <section
+      class="adoption-section"
+      v-if="!searched && defaultPets.length > 0"
+    >
+      <div class="adoption-container">
+        <div class="adoption-header">
+          <h2 class="adoption-title">입양 마감 임박 동물들</h2>
+          <p class="adoption-subtitle">
+            입양 마감일이 가까운 아이들을 소개해요.
+          </p>
+        </div>
+        <div class="adoption-content">
+          <div
+            v-for="(row, rowIndex) in chunkedDefaultPets"
+            :key="rowIndex"
+            class="adoption-row"
+          >
+            <div v-for="a in row" :key="a.desertionNo" class="pet-card">
+              <div class="pet-image">
+                <img :src="a.popfile1 || '/image/no-image.png'" alt="사진" />
+              </div>
+              <div class="pet-info">
+                <div class="pet-tags">
+                  <span class="tag tag-dark">{{ a.sexCd }} / {{ a.age }}</span>
+                  <span class="tag tag-light">{{ a.kindCd }}</span>
+                </div>
+                <div class="pet-details">
+                  <div class="pet-details-content">
+                    <div class="pet-name">No. {{ a.desertionNo }}</div>
+                    <div class="pet-location">{{ a.happenPlace }}</div>
+                    <div class="pet-description">
+                      {{ a.noticeSdt }} ~ {{ a.noticeEdt }}
+                    </div>
+                  </div>
+                  <button @click="DetailView(a.desertionNo)" class="pet-button">
+                    상세보기
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -251,7 +266,8 @@ export default {
       faqs: [
         {
           question: "홈페이지에서 직접 입양이 가능한가요?",
-          answer: "홈페이지에서의 직접 입양은 불가합니다. 해당 보호소로 유선 연락 부탁드립니다.",
+          answer:
+            "홈페이지에서의 직접 입양은 불가합니다. 해당 보호소로 유선 연락 부탁드립니다.",
         },
         {
           question: "입양 후 반려동물 등록은 어떻게 하나요?",
@@ -259,7 +275,8 @@ export default {
         },
         {
           question: "입양 조건이 따로 있나요?",
-          answer: "일부 보호소는 보호자 요건을 따로 두고 있습니다. 해당 보호소에 문의해주세요.",
+          answer:
+            "일부 보호소는 보호자 요건을 따로 두고 있습니다. 해당 보호소에 문의해주세요.",
         },
       ],
     };
@@ -872,15 +889,19 @@ body {
 }
 
 .pet-button {
-  padding: 8px 12px;
-  background-color: #008be6;
-  color: white;
+  width: 420px;
+  height: 42px;
+  background-color: #F7F7FB;
+  color: #111;
   border: none;
   border-radius: 8px;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 15px;
+  font-family: 'Pretendard', sans-serif;
   cursor: pointer;
-  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pet-button:hover {

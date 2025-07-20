@@ -4,7 +4,7 @@
     <div class="menu">
       <div class="menu-item" @click="goToPetAbandonmentList">유기동물 조회</div>
       <div class="menu-item" @click="goToUserPet">반려동물</div>
-      <div class="menu-item">쇼핑몰</div>
+      <div class="menu-item" @click="goToProduct">쇼핑몰</div>
       <div class="menu-item" @click="goToBoardCategoryList">커뮤니티</div>
     </div>
 
@@ -74,6 +74,7 @@ const goToMyInfo = () => router.push({ name: 'myInfo' });
 const goToUpdateProfile = () => router.push('/user/update');
 const goToAdminDashboard = () => router.push({ name: 'adminDashboard' });
 const goToPetAbandonmentList = () => router.push({ name: 'abandonmentList' });
+const goToProduct = () => router.push({ name: 'ProductList' });
 
 // 채팅 모달 열기
 const openChatModal = () => {
