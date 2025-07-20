@@ -207,7 +207,7 @@
 <!-- <button :disabled="!isFormValid" class="register-button"> -->
 
 <!-- 수정 후 -->
-<button @click="registerPet" class="register-button">
+<button class="register-button">
   등록하기
 </button>
 
@@ -235,13 +235,13 @@ const router = useRouter();
 const pet = ref({
   kindCd: "",
   kindNm: "",
-  speciesCode: "",
   petName: "",
   petGender: "",
   isNeutered: "",
   rfidNo: "",
   petWeight: null,
   petBirth: "",
+  specialNotes: ""
   // petImageUrl: ''
 });
 
@@ -260,7 +260,6 @@ const kindList = ref([]);
 const fetchKinds = () => {
   pet.value.kindCd = "";
   pet.value.kindNm = "";
-  pet.value.speciesCode = "";
   kindList.value = [];
 
   if (!selectedUpKindCd.value) return;
