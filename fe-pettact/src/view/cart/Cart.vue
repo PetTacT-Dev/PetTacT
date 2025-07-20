@@ -1,6 +1,6 @@
 <template>
-  <div class="cart-view container py-4 text-white">
-    <div class="mb-3 text-white">
+  <div class="container py-4 text-dark cart-view">
+    <div class="mb-3">
       <p v-if="user">
         👤 사용자: {{ user.userNickname }} ({{ user.userEmail }})
       </p>
@@ -8,9 +8,8 @@
     <h2 class="mb-4">장바구니</h2>
 
     <div class="mb-3 d-flex gap-2">
-      <button @click="goToList" class="btn btn-secondary">상품 목록</button>
-      <!-- 로그인된 사용자라면 누구나 주문 내역 보기 가능 -->
-    <button v-if="isLoggedIn" @click="goToOrderList" class="btn btn-secondary">주문 내역</button>
+      <button @click="goToList" class="btn btn-outline-primary">상품 목록</button>
+      <button v-if="isLoggedIn" @click="goToOrderList" class="btn btn-outline-primary">주문 내역</button>
     </div>
 
     <div v-if="cartStore.loading" class="mb-3">불러오는 중...</div>
@@ -18,45 +17,38 @@
       장바구니가 비어 있습니다.
     </div>
 
-    <table v-else class="table table-bordered align-middle text-white">
-      <thead class="table-secondary text-dark text-center">
+    <table v-else class="table table-striped table-bordered align-middle">
+      <thead class="table-primary text-center">
         <tr>
-          <th style="width: 40px;"></th> <!-- 체크박스 -->
+          <th style="width: 40px;"></th>
           <th>상품 정보</th>
           <th style="width: 100px;">수량</th>
           <th style="width: 120px;">주문 금액</th>
-          <th style="width: 80px;"></th> <!-- 삭제 -->
+          <th style="width: 80px;"></th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="item in cartStore.cartItems" :key="item.cartNo">
-          <!-- 체크박스 -->
-          <td class="text-center">
+          <td class="text-center align-middle">
             <input
               type="checkbox"
               :value="item.cartNo"
               v-model="selectedItems"
               :disabled="!item.productName"
-              class="form-check-input"
+              class="custom-checkbox"
             />
           </td>
-
-          <!-- 상품 정보 -->
           <td>
-            <div class="d-flex gap-3 align-items-center">
-              <!-- 이미지 -->
+            <div class="d-flex align-items-center gap-3">
               <img
                 v-if="item.imageUrl"
                 :src="getImageUrl(item.imageUrl)"
                 alt="상품 이미지"
-                class="img-thumbnail"
-                style="width: 80px; height: 80px; object-fit: cover;"
+                class="product-image"
               />
-
-              <!-- 텍스트 정보 -->
               <div>
-                <div v-if="item.productName">
-                  <router-link :to="`/product/${item.productNo}`">
+                <div v-if="item.productName" class="product-name-item">
+                  <router-link :to="`/product/${item.productNo}`" class="text-decoration-none">
                     {{ item.productName }}
                   </router-link>
                 </div>
@@ -64,40 +56,32 @@
               </div>
             </div>
           </td>
-
-          <!-- 수량 -->
           <td class="text-center">
             <div v-if="item.productName" class="input-group input-group-sm justify-content-center">
-                <button
-                  class="btn btn-light text-dark"
-                  @click="changeQuantity(item, -1)"
-                  :disabled="item.productStock <= 1"
-                >−</button>
-
-                <input
-                  class="form-control text-center"
-                  :value="item.productStock"
-                  readonly
-                  style="max-width: 50px;"
-                />
-
-                <button
-                  class="btn btn-light text-dark"
-                  @click="changeQuantity(item, 1)"
-                >+</button>
-              </div>
+              <button
+                class="btn btn-light text-dark"
+                @click="changeQuantity(item, -1)"
+                :disabled="item.productStock <= 1"
+              >−</button>
+              <input
+                class="form-control text-center"
+                :value="item.productStock"
+                readonly
+                style="max-width: 50px;"
+              />
+              <button
+                class="btn btn-light text-dark"
+                @click="changeQuantity(item, 1)"
+              >+</button>
+            </div>
           </td>
-
-          <!-- 주문 금액 -->
           <td class="text-end">
             <span v-if="item.productName">
-              {{ getFormattedPrice(item.productPrice * item.productStock) }}원
+              {{ getFormattedPrice(item.productPrice * item.productStock) }} 원
             </span>
           </td>
-
-          <!-- 삭제 -->
           <td class="text-center">
-            <button v-if="isLoggedIn" @click="removeItem(item.cartNo)" class="btn btn-sm btn-outline-secondary">
+            <button v-if="isLoggedIn" @click="removeItem(item.cartNo)" class="btn btn-outline-danger btn-sm">
               삭제
             </button>
           </td>
@@ -109,40 +93,38 @@
       <button
         @click="orderSelectedItems"
         :disabled="selectedItems.length === 0"
-        class="btn btn-secondary"
+        class="btn btn-primary"
         type="button"
       >
         구매하기 ({{ selectedItems.length }}개 선택됨)
       </button>
     </div>
   </div>
-  <div class="mt-4 text-center">
-  <button
-    class="btn btn-sm btn-outline-light me-2"
-    :disabled="cartStore.currentPage === 0"
-    @click="changePage(cartStore.currentPage - 1)"
-  >
-    ◀ 이전
-  </button>
 
-  <span class="fw-bold text-white">
-    {{ cartStore.currentPage + 1 }} / {{ cartStore.totalPages }}
-  </span>
-
-  <button
-    class="btn btn-sm btn-outline-light ms-2"
-    :disabled="cartStore.currentPage + 1 >= cartStore.totalPages"
-    @click="changePage(cartStore.currentPage + 1)"
-  >
-    다음 ▶
-  </button>
-</div>
+  <nav v-if="cartStore.totalPages > 1" class="mt-4 d-flex justify-content-center">
+    <ul class="pagination mb-0">
+      <li class="page-item" :class="{ disabled: cartStore.currentPage === 0 }">
+        <button class="page-link" @click="changePage(cartStore.currentPage - 1)">이전</button>
+      </li>
+      <li
+        v-for="page in cartStore.totalPages"
+        :key="page"
+        class="page-item"
+        :class="{ active: page - 1 === cartStore.currentPage }"
+      >
+        <button class="page-link" @click="changePage(page - 1)">{{ page }}</button>
+      </li>
+      <li class="page-item" :class="{ disabled: cartStore.currentPage + 1 >= cartStore.totalPages }">
+        <button class="page-link" @click="changePage(cartStore.currentPage + 1)">다음</button>
+      </li>
+    </ul>
+  </nav>
 </template>
 
 
 
 <script setup>
-import { ref, onMounted , computed } from 'vue';
+import { ref, onMounted , computed , watch } from 'vue';
 import { useCartStore } from '@/stores/cart';
 import { useOrderStore } from '@/stores/order';  // order 스토어 임포트
 import { useRouter } from 'vue-router';
@@ -159,6 +141,9 @@ const user = computed(() => userStore.user)
 // 선택된 cartNo들을 저장하는 배열
 const selectedItems = ref([]);
 
+// ✅ [추가] 선택된 상품의 상세 정보를 저장하는 Map
+const selectedItemDetails = ref(new Map());
+
 const getFormattedPrice = (price) => {
   return new Intl.NumberFormat('ko-KR').format(price);
 };
@@ -170,7 +155,14 @@ const goToOrderList = () => {
 const changePage = (pageNum) => {
   if (pageNum >= 0 && pageNum < cartStore.totalPages) {
     cartStore.fetchCart(pageNum);
-    selectedItems.value = []; // 페이지 이동 시 선택 초기화
+
+    // 페이지 이동 시 선택 초기화
+    //selectedItems.value = [];
+    
+    // ✅ 대신 현재 페이지에서 체크되지 않은 항목만 제거하도록 처리
+    selectedItems.value = selectedItems.value.filter(cartNo =>
+      selectedItemDetails.value.has(cartNo)
+    );
   }
 };
 
@@ -199,6 +191,9 @@ const removeItem = async (cartNo) => {
       const index = selectedItems.value.indexOf(cartNo);
       if (index !== -1) selectedItems.value.splice(index, 1);
 
+      // ✅ 상세 정보에서도 제거
+      selectedItemDetails.value.delete(cartNo);
+
       // 삭제 요청 & 상태 반영
       await cartStore.deleteCartItem(cartNo);
     } catch (err) {
@@ -216,6 +211,23 @@ onMounted(async () => {
   });
 });
 
+// ✅ selectedItems에 변화가 생기면 상세정보 Map을 업데이트
+watch(selectedItems, (newSelected) => {
+  newSelected.forEach(cartNo => {
+    const item = cartStore.cartItems.find(item => item.cartNo === cartNo);
+    if (item) {
+      selectedItemDetails.value.set(cartNo, { ...item });
+    }
+  });
+
+  // 선택 해제된 항목은 제거
+  for (const cartNo of selectedItemDetails.value.keys()) {
+    if (!newSelected.includes(cartNo)) {
+      selectedItemDetails.value.delete(cartNo);
+    }
+  }
+});
+
 const orderSelectedItems = async () => {
   if (selectedItems.value.length === 0) {
     alert('주문할 상품을 선택해주세요.')
@@ -225,9 +237,12 @@ const orderSelectedItems = async () => {
   // 1️⃣ 주문 전에 cart 재조회해서 최신 수량 반영
   await cartStore.fetchCart()
 
-  const itemsToOrder = cartStore.cartItems.filter(item =>
-    selectedItems.value.includes(item.cartNo)
-  )
+  // const itemsToOrder = cartStore.cartItems.filter(item =>
+  //   selectedItems.value.includes(item.cartNo)
+  // )
+
+  // ✅ 수정: 선택된 모든 상세정보에서 주문 목록 생성
+  const itemsToOrder = Array.from(selectedItemDetails.value.values());
 
   const orderDetails = itemsToOrder.map(item => ({
     productNo: item.productNo,
@@ -240,6 +255,7 @@ const orderSelectedItems = async () => {
     //const result = await orderStore.createOrder(orderDetails)
     alert('주문서가 성공적으로 생성되었습니다.')
     selectedItems.value = []
+    selectedItemDetails.value.clear(); // ✅ 주문 완료 후 상세 정보 초기화
     await cartStore.fetchCart()
     orderStore.setOrderDraft(itemsToOrder);  
     router.push('/order-sheet')
@@ -252,28 +268,97 @@ const orderSelectedItems = async () => {
 
 <style scoped>
 .product-image {
-  width: 200px;
-  height: 200px;
+  width: 48px;
+  height: 48px;
   object-fit: cover;
-  border-radius: 0px;
-  border: 1px solid #ccc;
+  border-radius: 6px;
+  border: 1px solid #ddd;
 }
 
+/* 버튼 스타일 */
+.btn-primary {
+  background-color: #008be6;
+  border-color: #008be6;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+  border-radius: 8px;
+  padding: 10px 18px;
+}
+
+.btn-primary:hover {
+  background-color: #006bb3;
+  border-color: #006bb3;
+  color: white;
+}
+
+.btn-outline-primary {
+  background-color: transparent;
+  border: 2px solid #008be6;
+  color: #008be6;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-outline-primary:hover {
+  background-color: #008be6;
+  color: white;
+}
+
+/* 삭제 버튼 */
+.btn-outline-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* 테이블 */
+.table {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.08);
+  font-size: 14px;
+}
+
+.table-primary {
+  background-color: #008be6;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.cart-view {
+  max-width: 940px;
+  margin: 0 auto;
+  color: #2e2e2e;
+}
+
+/* 체크박스 */
 .custom-checkbox {
-  width: 20px;
-  height: 20px;
-  background-color: #ccc; /* 연한 회색 배경 */
-  border: 1.5px solid #888; /* 진한 회색 테두리 */
-  appearance: none;
-  -webkit-appearance: none;
-  outline: none;
   cursor: pointer;
-  border-radius: 3px;
-  position: relative;
+  width: 18px;
+  height: 18px;
 }
 
-.input-group-sm .form-control {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
+/* 페이징 */
+.pagination {
+  --bs-pagination-color: #008be6;
+  --bs-pagination-hover-color: #0056b3;
+  --bs-pagination-active-bg: #008be6;
+  --bs-pagination-active-color: white;
+  border-radius: 8px;
+  font-weight: 600;
 }
+
 </style>

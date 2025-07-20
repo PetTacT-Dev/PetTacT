@@ -1,5 +1,6 @@
 <template>
   <div class="container py-4 text-black">
+    <div class="order-wrapper">
     <h2 class="mb-4">주문서</h2>
 
     <div v-if="!orderStore.orderDraft.length" class="alert alert-warning">
@@ -77,6 +78,7 @@
       </div>
     </div>
   </div>
+  </div>
   
 </template>
 
@@ -95,12 +97,12 @@ const isLoggedIn = computed(() => !!userStore.user)
 
 //===================샘플데이터================
 
-const deliveryName = ref('김철수');
+const deliveryName = ref('조용민');
 const receiver = ref('집');
 const zipcode = ref('');
 const address1 = ref('');
 const address2 = ref('');
-const phone = ref('010-1111-1111');
+const phone = ref('');
 const addressType = ref('existing');
 
 const totalPrice = computed(() =>
@@ -108,10 +110,26 @@ const totalPrice = computed(() =>
 );
 
 const searchZipcode = () => {
-  alert('우편번호 검색 모듈과 연동하세요.');
-  zipcode.value = '04000';
-  address1.value = '서울시 마포구 예제로 123';
-  address2.value = '1층 101호';
+  new window.daum.Postcode({
+    oncomplete: (data) => {
+      zipcode.value = data.zonecode;
+
+      // 기본 주소 구성
+      let fullAddress = data.address;
+      let extraAddress = '';
+
+      if (data.addressType === 'R') {
+        if (data.bname !== '') extraAddress += data.bname;
+        if (data.buildingName !== '') {
+          extraAddress += (extraAddress ? ', ' : '') + data.buildingName;
+        }
+        if (extraAddress) fullAddress += ` (${extraAddress})`;
+      }
+
+      address1.value = fullAddress;
+      address2.value = ''; // 상세 주소는 사용자 입력
+    }
+  }).open();
 };
 
 const getFormattedPrice = (price) => new Intl.NumberFormat().format(price);
@@ -157,21 +175,41 @@ const submitOrder = async () => {
       productStock: item.productStock
     }));
 
+   const orderResponse = await orderStore.createOrder({
+  //orderId: orderId,
+  //orderNo: orderNo,
+  deliveryName: deliveryName.value,
+  receiver: receiver.value,
+  zipcode: zipcode.value,
+  address1: address1.value,
+  address2: address2.value,
+  phone: phone.value,
+  orderDetails: orderDetails
+});
+// const orderNo = orderResponse.orderNo;
+// localStorage.setItem('orderNo', orderNo);
+
+//     alert('결제 및 주문 완료!');
+//     orderStore.clearOrderDraft();
+//     router.push('/order');
+
     // 3. 주문 ID 생성
-    const orderId = `ORDER-${Date.now()}-${generateUUID()}`; // ✅ 여기서 고유한 주문번호를 생성
-    console.log('✅ 생성된 orderId:', orderId); // 이 부분 중요
+    // const orderId = `orderNo-${Date.now()}-${generateUUID()}`; // ✅ 여기서 고유한 주문번호를 생성
+    const orderId = `orderNo-${orderResponse.orderNo}`; // ✅ 여기서 고유한 주문번호를 생성
+
+    // console.log('✅ 생성된 orderId:', orderId); // 이 부분 중요
 
     // 4. TossPayments 초기화 대기
     await waitForToss(); // ✅ TossPayments 로딩 대기
 
     const toss = window.TossPayments('test_ck_DpexMgkW36oAl1jdPad9VGbR5ozO'); // ✅ Toss 클라이언트 키
-    const successUrl = `${window.location.origin}/order/payment-success?orderId=${orderId}&amount=${totalPrice.value}`;
+    const successUrl = `${window.location.origin}/order/payment-success`;
     const failUrl = `${window.location.origin}/order/payment-fail`;
 
     // 5. Toss 결제 요청
     const result = await toss.requestPayment('카드', {
       amount: totalPrice.value,
-      orderId: orderId,
+      orderId,
       orderName: orderStore.orderDraft[0]?.productName || '장바구니 상품',
       customerEmail: userStore.user?.email || 'guest@example.com',
       successUrl: successUrl,
@@ -181,7 +219,10 @@ const submitOrder = async () => {
       console.log('✅ 생성된 failUrl:', failUrl); // 이 부분도 중요
       console.log('✅ totalPrice.value:', totalPrice.value)
       console.log('✅ orderStore.orderDraft:', orderStore.orderDraft)
-
+      } catch (err) {
+    alert('결제 또는 주문 중 오류 발생');
+    console.error(err);
+  }
     //6. 결제 승인 요청
     // await orderStore.confirmPayment({
     //   paymentKey: result.paymentKey,
@@ -189,28 +230,107 @@ const submitOrder = async () => {
     //   amount: totalPrice.value
     // });
 // 7. 주문 생성
-const orderNo = orderResponse.orderNo;
-//localStorage.setItem('orderNo', orderNo);
-const orderResponse = await orderStore.createOrder({
-  orderId: orderId,
-  orderNo: orderNo,
-  deliveryName: deliveryName.value,
-  receiver: receiver.value,
-  zipcode: zipcode.value,
-  address1: address1.value,
-  address2: address2.value,
-  phone: phone.value,
-  orderDetails: orderDetails
-});
+// const orderResponse = await orderStore.createOrder({
+//   orderId: orderId,
+//   //orderNo: orderNo,
+//   deliveryName: deliveryName.value,
+//   receiver: receiver.value,
+//   zipcode: zipcode.value,
+//   address1: address1.value,
+//   address2: address2.value,
+//   phone: phone.value,
+//   orderDetails: orderDetails
+// });
+// const orderNo = orderResponse.orderNo;
+// localStorage.setItem('orderNo', orderNo);
 
-    alert('결제 및 주문 완료!');
-    orderStore.clearOrderDraft();
-    router.push('/order');
+//     alert('결제 및 주문 완료!');
+//     orderStore.clearOrderDraft();
+//     router.push('/order');
 
-  } catch (err) {
-    alert('결제 또는 주문 중 오류 발생');
-    console.error(err);
-  }
+//   } catch (err) {
+//     alert('결제 또는 주문 중 오류 발생');
+//     console.error(err);
+//   }
 };
 
 </script>
+
+<style scoped >
+.order-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  font-family: 'Pretendard', sans-serif;
+  color: #222;
+}
+
+.table {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  vertical-align: middle !important;
+}
+
+.form-label {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.form-control {
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Pretendard', sans-serif;
+}
+
+.form-control:focus {
+  border-color: #008BE6;
+  box-shadow: 0 0 0 0.2rem rgba(0, 139, 230, 0.2);
+}
+
+.btn {
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+.btn-secondary {
+  background-color: #008BE6;
+  border-color: #008BE6;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #006bb3;
+  border-color: #006bb3;
+}
+
+.btn-secondary-light {
+  background-color: #f1f5f9;
+  border: 1px solid #ddd;
+  color: #333;
+  font-weight: 500;
+}
+
+.btn-secondary-light:hover {
+  background-color: #e2e8f0;
+  color: #000;
+}
+
+.input-group .form-control {
+  flex: 1;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeeba;
+  color: #856404;
+  font-size: 14px;
+}
+
+</style>

@@ -1,49 +1,53 @@
 <template>
-  <div class="container py-4" style="background-color: #494949; min-height: 100vh;">
+  <div class="container py-4 order-view">
     <div v-if="order">
-      <h2 class="text-white mb-3">주문 내역 (번호: {{ order.orderNo }})</h2>
+      <h2 class="mb-3 text-dark fw-bold">주문 내역 (번호: {{ order.orderNo }})</h2>
+      <div style="text-align: left">
+      <p class="text-dark mb-1"><strong>주문 상태: </strong>{{ getStatusText(order.status) }}</p>
+      <p class="text-dark mb-1"><strong>받는 사람: </strong> {{ order.receiver }}</p>
+      <p class="text-dark mb-1"><strong>배송지:</strong> {{ order.zipcode }} {{ order.address1 }} {{ order.address2 }}</p>
+      <p class="text-dark mb-1"><strong>연락처:</strong> {{ order.phone }}</p>
 
-      <p class="text-white mb-1"><strong>주문 상태: </strong>{{ getStatusText(order.status) }}</p>
-      <p class="text-white mb-1"><strong>받는 사람: </strong> {{ order.receiver }}</p>
-      <p class="text-white mb-1"><strong>배송지:</strong> {{ order.zipcode }} {{ order.address1 }} {{ order.address2 }}</p>
-      <p class="text-white mb-1"><strong>연락처:</strong> {{ order.phone }}</p>
-
-      <p class="text-white mb-1"><strong>주문 시간:</strong> {{ formatDate(order.createdAt) }}</p>
-      <p v-if="order.deletedAt" class="text-white mb-1"><strong>삭제 시간:</strong> {{ formatDate(order.deletedAt) }}</p>
-      <p class="text-white mb-3"><strong>총 금액:</strong> {{ order.totalPrice.toLocaleString() }}원</p>
-
-      <h3 class="text-white mb-3">주문 상품 내역</h3>
-
+      <p class="text-dark mb-1"><strong>주문 시간:</strong> {{ formatDate(order.createdAt) }}</p>
+      <p v-if="order.deletedAt" class="text-dark mb-1"><strong>삭제 시간:</strong> {{ formatDate(order.deletedAt) }}</p>
+      <!-- <h3 class="mb-3 text-dark fw-bold">주문 상품내역</h3> -->
+      
       <ul class="list-unstyled">
-        <li 
-          v-for="item in order.products" 
-          :key="item.orderDetailNo" 
-          class="d-flex align-items-center mb-3 text-white"
+        <li
+        v-for="item in order.products"
+        :key="item.orderDetailNo"
+        class="d-flex align-items-center mb-3 text-dark product-item"
         >
-          <img
-            v-if="item.imageUrl"
-            :src="getImageUrl(item.imageUrl)" 
-            alt="상품 이미지" 
-            class="me-3 rounded" 
-            style="width: 60px; height: 60px; object-fit: cover;" 
-          />
-          <div>
-            <router-link 
-              :to="`/product/${item.productNo}`" 
-              class="text-white text-decoration-none fw-semibold"
+        <img
+        v-if="item.imageUrl"
+        :src="getImageUrl(item.imageUrl)"
+        alt="상품 이미지"
+        class="product-image rounded"
+        />
+        <div>
+          <router-link
+              :to="`/product/${item.productNo}`"
+              class="text-dark text-decoration-none fw-semibold product-name-link"
             >
               {{ item.productName }}
             </router-link>
-            <div>수량: {{ item.productStock }} | 가격: {{ item.productPrice.toLocaleString() }}원</div>
+            <div class="product-detail-text">수량: {{ item.productStock }} | 가격: {{ item.productPrice.toLocaleString() }}원</div>
           </div>
         </li>
       </ul>
+      <p class="text-dark mb-4 fw-semibold fs-5"><strong>총 금액:</strong> {{ order.totalPrice.toLocaleString() }}원</p>
+    </div>
 
-      <div class="mt-4">
-        <button v-if="isLoggedIn" @click="goToList" class="btn btn-secondary me-2">상품 목록</button>
-        <button v-if="isLoggedIn" @click="goToOrderList" class="btn btn-secondary me-2">주문 내역</button>
-          <!-- ✅ 주문 상태가 "주문완료"일 경우에만 취소 가능 -->
-        <button v-if="isLoggedIn" @click="cancelOrder" class="btn btn-secondary me-2">주문 취소</button>
+      <div class="btn-group">
+        <button v-if="isLoggedIn" @click="goToList" class="btn btn-outline-primary me-2">상품 목록</button>
+        <button v-if="isLoggedIn" @click="goToOrderList" class="btn btn-outline-primary me-2">주문 내역</button>
+        <button
+          v-if="isLoggedIn && order.status === 'COMPLETE'"
+          @click="cancelOrder"
+          class="btn btn-danger me-2"
+        >
+          주문 취소
+        </button>
       </div>
     </div>
   </div>
@@ -129,12 +133,100 @@ const cancelOrder = async () => {
 };
 </script>
 
-<style>
+<style scoped>
+.order-view {
+  max-width: 900px;
+  margin: 0 auto;
+  font-family: 'Pretendard', sans-serif;
+  color: #222;
+  background-color: #fff;
+  padding: 2rem 1.5rem;
+  text-align: center; /* 핵심! 전체 중앙 정렬 느낌 제공 */
+}
+
+h2, h3 {
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.text-dark {
+  color: #222 !important;
+}
+
+.product-item {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 중앙 정렬 */
+  gap: 16px;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+}
+
 .product-image {
   width: 60px;
   height: 60px;
   object-fit: cover;
-  margin-right: 8px;
-  vertical-align: middle;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
+
+.product-name-link {
+  font-size: 15px;
+  font-weight: 600;
+  color: #222;
+  text-align: left;
+  display: inline-block;
+}
+
+.product-name-link:hover {
+  text-decoration: underline;
+  color: #008be6;
+}
+
+.product-detail-text {
+  font-size: 13px;
+  color: #555;
+  margin-top: 4px;
+  text-align: left;
+}
+
+.btn-group {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.btn-outline-primary {
+  background-color: #f1f5f9;
+  border: 1px solid #008be6;
+  color: #008be6;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 16px;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-outline-primary:hover {
+  background-color: #008be6;
+  color: white;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 16px;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-danger:hover {
+  background-color: #b02a37;
+  border-color: #b02a37;
+}
+
 </style>
