@@ -37,6 +37,10 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 	    Pageable pageable
 	);
 
+    // 카테고리 별 게시글 목록 조회
+    @Query("SELECT b FROM Board b WHERE b.boardCategory.boardCategoryNo = :categoryNo ORDER BY b.boardNo ASC")
+    Page<Board> findBoardsByCategoryNo(@Param("categoryNo") Long categoryNo, Pageable pageable);
+
     // 카테고리에서 게시글 total 조회
     @Query("SELECT COUNT(b) FROM Board b WHERE b.boardCategory.boardCategoryNo = :categoryNo")
     int countByCategoryNo(@Param("categoryNo") Long categoryNo);
@@ -71,5 +75,24 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     @Transactional
     @Query("UPDATE Board b SET b.boardViewCnt = b.boardViewCnt + :count WHERE b.boardNo = :boardNo")
     void updateViewCount(@Param("boardNo") Long boardNo, @Param("count") int count);
+
+    // 게시글 통합겸색
+    @Query("""
+        SELECT b FROM Board b
+        WHERE b.boardCategory.boardCategoryNo = :categoryNo
+        AND b.isDeleted = false
+        AND (:keyword IS NULL OR :keyword = '' OR
+             b.boardTitle LIKE %:keyword% OR
+             b.boardContent LIKE %:keyword% OR
+             b.user.userNickname LIKE %:keyword%)
+        ORDER BY b.boardNo ASC
+    """)
+    Page<Board> searchBoardsByCategory(
+            @Param("categoryNo") Long categoryNo,
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
+
 
 }

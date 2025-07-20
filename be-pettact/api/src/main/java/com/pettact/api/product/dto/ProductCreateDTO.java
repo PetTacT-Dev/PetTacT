@@ -1,5 +1,7 @@
 package com.pettact.api.product.dto;
 
+import java.util.List;
+
 import com.pettact.api.multiFile.entity.MultiFile;
 
 import jakarta.validation.constraints.Min;
@@ -36,9 +38,11 @@ public class ProductCreateDTO {
     private Long categoryNo;
 	private boolean productStatus;
 	
-	private String imageUrl;
+//	private String imageUrl;
+//	
+//	@NotNull(message = "이미지 1장은 필수입니다.")
+//	private MultiFile multiFile;
 	
-	@NotNull(message = "이미지 1장은 필수입니다.")
-	private MultiFile multiFile;
+	private List<String> imageUrls;
 
 }

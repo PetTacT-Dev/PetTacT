@@ -87,7 +87,7 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(authorize ->
                 authorize
-                    .requestMatchers("/v1/multifile/image/**").permitAll()
+                .requestMatchers("/v1/multifile/image/**").permitAll()
             	.requestMatchers("/v1/notification/subscribe").permitAll()
             	.requestMatchers("/v1/notification/**").authenticated()
             	.requestMatchers("/v1/user/mypage/**").authenticated()
@@ -98,14 +98,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/v1/product/delete/*").hasAuthority("ROLE_SELLER")
                 .requestMatchers("/v1/board-categories").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/v1/admin/**").hasAuthority("ROLE_ADMIN")
-<<<<<<< HEAD
-                .requestMatchers(HttpMethod.POST, "/v1/payments/**").permitAll()	// TODO: 결제 인증 해결,
-                    .anyRequest().permitAll()
-=======
                 .requestMatchers(HttpMethod.POST, "/v1/payments/**").permitAll()	// TODO: 결제 인증 해결
                 .requestMatchers("/files/**").permitAll()	// TODO: 결제 인증 해결
                 .anyRequest().permitAll()
->>>>>>> 2c950ca93cb248f77984a048a2a45eca992f0e53
         );
 
         http.oauth2Login(oauth2 -> oauth2

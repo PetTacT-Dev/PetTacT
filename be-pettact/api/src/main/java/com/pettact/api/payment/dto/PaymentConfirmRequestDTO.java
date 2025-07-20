@@ -8,6 +8,7 @@ import lombok.Data;
 @Data
 public class PaymentConfirmRequestDTO {
     private String paymentKey; // 토스에서 받은 고유 결제키
-    private String orderId;    // 우리 시스템의 주문 번호
+    private String orderId;
+    private Long orderNo;    // 우리 시스템의 주문 번호
     private Long amount;       // 결제된 금액 (단위: 원)
 }

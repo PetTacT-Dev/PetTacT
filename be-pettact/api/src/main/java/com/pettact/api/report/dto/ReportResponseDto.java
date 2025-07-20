@@ -22,6 +22,7 @@ public class ReportResponseDto {
     private Report.ReportTargetLocation reportTargetLocation;
     private Long reportTargetNo;
     private Report.ReportReason reportReason;
+    private String reportReasonDescription;
     private String reportDescription;
     private Integer reportStatus;
     private LocalDateTime createdAt;    // 신고 접수 시간
@@ -37,6 +38,7 @@ public class ReportResponseDto {
                 savedReport.getReportTargetLocation(),
                 savedReport.getReportTargetNo(),
                 savedReport.getReportReason(),
+                savedReport.getReportReason().getDescription(),
                 savedReport.getReportDescription(),
                 savedReport.getReportStatus(),
                 savedReport.getCreatedAt(),

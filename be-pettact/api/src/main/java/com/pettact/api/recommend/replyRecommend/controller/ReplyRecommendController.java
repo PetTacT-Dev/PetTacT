@@ -32,4 +32,19 @@ public class ReplyRecommendController {
         replyRecommendService.cancelRecommend(replyNo, userNo);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
+    // ✅ 게시글처럼 GET 메서드 추가
+    @GetMapping
+    public ResponseEntity<Boolean> checkReplyRecommendStatus(
+            @PathVariable("replyNo") Long replyNo,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        if (userDetails == null) {
+            return ResponseEntity.ok(false);
+        }
+
+        Long userNo = userDetails.getUserEntity().getUserNo();
+        boolean isRecommended = replyRecommendService.isUserRecommended(replyNo, userNo);
+        return ResponseEntity.ok(isRecommended);
+    }
 }

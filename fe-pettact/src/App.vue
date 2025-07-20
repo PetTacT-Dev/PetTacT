@@ -3,6 +3,8 @@
     <Header />
     <ToastNotification />
     <router-view :key="$route.fullPath" />
+
+    <MessageModal v-if="modalStore.isMessageModalOpen" @close="modalStore.closeMessageModal()" />
   </div>
 </template>
 
@@ -11,11 +13,14 @@ import { onMounted, watch } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { useNotificationStore } from '@/stores/notification';
 import { connectNotificationSSE, disconnectNotificationSSE } from '@/utils/sse/connectNotification';
+import { useModalStore } from '@/js/modalStore';
 import ToastNotification from './components/notification/ToastNotification.vue';
 import Header from './components/Header.vue';
+import MessageModal from '@/view/Chat/MessageModal.vue';
 
 const userStore = useUserStore();
 const notificationStore = useNotificationStore();
+const modalStore = useModalStore();
 
 // 초기 진입 시
 onMounted(async () => {

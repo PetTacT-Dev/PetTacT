@@ -32,7 +32,7 @@ public class Board extends BaseEntity {
     @JoinColumn(name = "board_category_no")
     private BoardCategory boardCategory;
 
-    @OneToMany(mappedBy = "board", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Reply>replies;
 
     @Column(name="board_title", nullable = false, length = 100)

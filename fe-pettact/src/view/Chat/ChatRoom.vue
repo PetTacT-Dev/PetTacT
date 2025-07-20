@@ -1,24 +1,73 @@
 <template>
   <div class="chat-room">
+    <!-- 채팅방 헤더 -->
+    <div class="chat-header">
+      <div class="chat-partner-info">
+        <div class="partner-avatar"> 
+        </div>
+        <div class="partner-details">
+          <h4 class="partner-name">채팅 상대방</h4>
+          <span class="member-count">2</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn search-btn">🔍</button>
+        <button class="action-btn menu-btn">☰</button>
+      </div>
+    </div>
+
+    <!-- 메시지 영역 -->
     <div ref="chatBox" class="chat-messages">
+      <!-- 날짜 구분선 -->
+      <div class="date-divider">
+        <span>2024년 10월 20일</span>
+      </div>
+
       <div
         v-for="(msg, index) in modalStore.messages"
         :key="index"
         :class="['chat-message', msg.isMine ? 'me' : 'other']"
       >
-        <span class="sender">{{ msg.senderNickname }}</span>
-        <div class="bubble">{{ msg.message }}</div>
+        <!-- 상대방 메시지 -->
+        <div v-if="!msg.isMine" class="message-group">
+          <div class="sender-avatar">
+          </div>
+          <div class="message-content">
+            <span class="sender-name">{{ msg.senderNickname }}</span>
+            <div class="message-row">
+              <div class="bubble other-bubble">{{ msg.message }}</div>
+              <div class="message-time">{{ formatMessageTime(msg.createdAt) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 내 메시지 -->
+        <div v-else class="message-group my-message">
+          <div class="message-content">
+            <div class="message-row">
+              <div class="message-time">{{ formatMessageTime(msg.createdAt) }}</div>
+              <div class="bubble my-bubble">{{ msg.message }}</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="chat-input">
-      <input
-        v-model="message"
-        @keyup.enter="sendMessage"
-        type="text"
-        placeholder="메시지를 입력하세요"
-      />
-      <button @click="sendMessage">전송</button>
+    <!-- 입력 영역 -->
+    <div class="chat-input-container">
+      <div class="input-wrapper">
+        <button class="attachment-btn">📎</button>
+        <input
+          v-model="message"
+          @keyup.enter="sendMessage"
+          type="text"
+          placeholder="메시지를 입력하세요"
+          class="message-input"
+        />
+        <button @click="sendMessage" class="send-btn" :disabled="!message.trim()">
+          전송
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -150,6 +199,19 @@ function sendMessage() {
   message.value = '';
 }
 
+// 메시지 시간 포맷
+function formatMessageTime(timestamp) {
+  if (!timestamp) return '방금 전';
+  
+  const date = new Date(timestamp);
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const period = hours >= 12 ? '오후' : '오전';
+  const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+  
+  return `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`;
+}
+
 // 자동 스크롤
 watch(() => modalStore.messages.length, async () => {
   await nextTick();
@@ -159,6 +221,7 @@ watch(() => modalStore.messages.length, async () => {
 });
 
 onMounted(() => {
+  console.log("ChatRoom 마운트됨, roomNo:", props.roomNo);
   fetchMessages(props.roomNo);
   connect(props.roomNo);
 });
@@ -169,116 +232,283 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* 채팅룸 전체 컨테이너 */
 .chat-room {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 400px;
-  background-color: #e5ddd5;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
 }
 
+/* 채팅방 헤더 */
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  min-height: 70px;
+}
+
+.chat-partner-info {
+  display: flex;
+  align-items: center;
+}
+
+.partner-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.partner-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.partner-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.partner-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+  line-height: 1.2;
+}
+
+.member-count {
+  font-size: 13px;
+  color: #6c757d;
+  margin-top: 2px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  color: #6c757d;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn:hover {
+  background: #e9ecef;
+  color: #2d3748;
+}
+
+/* 메시지 영역 */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 20px;
+  background: #f5f5f7;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.chat-message {
-  display: flex;
-  flex-direction: column;
-  max-width: 70%;
+/* 날짜 구분선 */
+.date-divider {
+  text-align: center;
+  margin: 20px 0 16px 0;
 }
 
-.chat-message.me {
-  align-self: flex-end;
-  align-items: flex-end;
-}
-
-.chat-message.other {
-  align-self: flex-start;
-  align-items: flex-start;
-}
-
-.sender {
+.date-divider span {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 12px;
   font-size: 12px;
-  color: #666;
+  font-weight: 500;
+}
+
+/* 메시지 그룹 */
+.message-group {
+  display: flex;
   margin-bottom: 4px;
 }
 
+.my-message {
+  justify-content: flex-end;
+}
+
+.sender-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 8px;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+.sender-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.message-content {
+  max-width: 70%;
+}
+
+.sender-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.my-message .message-row {
+  flex-direction: row-reverse;
+}
+
+/* 말풍선 */
 .bubble {
-  position: relative;
   padding: 10px 14px;
   border-radius: 18px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.4;
-  background-color: #ffffff;
-  color: #000;
   word-break: break-word;
+  max-width: 100%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.chat-message.me .bubble {
-  background-color: #9fe6a0;
-  color: #000;
+.other-bubble {
+  background: #ffffff;
+  color: #2d3748;
+  border-bottom-left-radius: 6px;
 }
 
-.chat-message.other .bubble::before {
-  content: '';
-  position: absolute;
-  top: 10px;
-  left: -6px;
-  width: 0;
-  height: 0;
-  border-top: 6px solid transparent;
-  border-right: 6px solid #ffffff;
-  border-bottom: 6px solid transparent;
+.my-bubble {
+  background: #ffe066;
+  color: #2d3748;
+  border-bottom-right-radius: 6px;
 }
 
-.chat-message.me .bubble::before {
-  content: '';
-  position: absolute;
-  top: 10px;
-  right: -6px;
-  width: 0;
-  height: 0;
-  border-top: 6px solid transparent;
-  border-left: 6px solid #9fe6a0;
-  border-bottom: 6px solid transparent;
+.message-time {
+  font-size: 11px;
+  color: #8e8e93;
+  white-space: nowrap;
+  align-self: flex-end;
+  margin-bottom: 2px;
 }
 
-.chat-input {
+/* 입력 영역 */
+.chat-input-container {
+  padding: 16px 20px;
+  background: #ffffff;
+  border-top: 1px solid #e9ecef;
+}
+
+.input-wrapper {
   display: flex;
-  border-top: 1px solid #ccc;
-  padding: 10px;
-  background-color: #f0f0f0;
-}
-
-.chat-input input {
-  flex: 1;
-  padding: 10px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-  outline: none;
-  background-color: #fff;
-  margin-right: 8px;
-}
-
-.chat-input button {
+  align-items: center;
+  gap: 12px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 22px;
   padding: 8px 16px;
-  background-color: #4caf50;
+  transition: all 0.2s ease;
+}
+
+.input-wrapper:focus-within {
+  border-color: #007AFF;
+  background: #ffffff;
+}
+
+.attachment-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #8e8e93;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.attachment-btn:hover {
+  background: #e9ecef;
+}
+
+.message-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  background: transparent;
+  color: #2d3748;
+  padding: 6px 0;
+}
+
+.message-input::placeholder {
+  color: #8e8e93;
+}
+
+.send-btn {
+  background: #007AFF;
   color: white;
   border: none;
-  border-radius: 20px;
+  border-radius: 16px;
+  padding: 6px 16px;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.chat-input button:hover {
-  background-color: #43a047;
+.send-btn:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.send-btn:disabled {
+  background: #c7c7cc;
+  cursor: not-allowed;
+}
+
+/* 스크롤바 스타일링 */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 </style>

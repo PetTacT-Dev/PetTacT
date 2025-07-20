@@ -17,7 +17,7 @@ public class MongoTTLConfig {
     public void initTTLIndex() {
         Index index = new Index()
                 .on("timestamp", Sort.Direction.ASC)
-                .expire(86400); // 1일후 로그 데이터 삭제 (초 단위로 기록됨) 
+                .expire(604800); // 1일후 로그 데이터 삭제 (초 단위로 기록됨) 
         mongoTemplate.indexOps("httplogs").ensureIndex(index);
     }
 }

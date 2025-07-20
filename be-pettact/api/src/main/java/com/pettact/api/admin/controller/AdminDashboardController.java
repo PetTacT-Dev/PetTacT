@@ -15,8 +15,10 @@ import com.pettact.api.admin.dto.dashboard.board.BoardDailyStatsDTO;
 import com.pettact.api.admin.dto.dashboard.board.BoardStatsDTO;
 import com.pettact.api.admin.dto.dashboard.report.ReportDailyStatsDTO;
 import com.pettact.api.admin.dto.dashboard.user.DailyUserStatsDTO;
+import com.pettact.api.admin.dto.dashboard.user.SellerPendingDTO;
 import com.pettact.api.admin.dto.dashboard.user.UserRegStatsDTO;
 import com.pettact.api.admin.service.AdminDashboardService;
+import com.pettact.api.report.dto.ReportResponseDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,6 +40,7 @@ public class AdminDashboardController {
         }
     }
 
+    // --------------- USER ---------------
     // 가입자 통계
     @GetMapping("/user/registration")
     public ResponseEntity<?> getUserRegistrationStats() {
@@ -59,7 +62,8 @@ public class AdminDashboardController {
             return ResponseEntity.badRequest().body("일별 가입자 통계 조회 실패: " + e.getMessage());
         }
     }
-
+    
+    // --------------- BOARD ---------------
     // 게시물 통계
     @GetMapping("/board")
     public ResponseEntity<?> getBoardStats() {
@@ -93,6 +97,21 @@ public class AdminDashboardController {
         }
     }
 
+    // 최근 삭제된 게시물 통계
+    @GetMapping("/board/recent-deleted")
+    public ResponseEntity<?> getRecentDeletedBoards(
+    		@RequestParam(value = "todayOnly", required = false) Boolean todayOnly,
+    		@RequestParam(value = "limit", defaultValue = "10") int limit) {
+    	
+    	try {
+    		List<AdminBoardListDTO> list = dashboardService.getRecentDeletedBoards(todayOnly, limit);
+    		return ResponseEntity.ok(list);
+    	} catch (Exception e) {
+    		return ResponseEntity.badRequest().body("최근 삭제된 게시물 조회 실패: " + e.getMessage());
+    	}
+    }
+
+    // --------------- REPORT ---------------
     // 일별 신고 통계
     @GetMapping("/report/daily")
     public ResponseEntity<?> getDailyReportStats(@RequestParam(value = "days", defaultValue = "7") int days) {
@@ -104,6 +123,30 @@ public class AdminDashboardController {
         }
     }
     
+    // 미처리 신고 건수 조회
+    @GetMapping("/report/pending-count")
+    public ResponseEntity<?> getPendingReportCount() {
+        try {
+            Long count = dashboardService.getPendingReportCount();
+            return ResponseEntity.ok(count);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("미처리 신고 건수 조회 실패: " + e.getMessage());
+        }
+    }
+
+    // 최신 신고 리스트 조회
+    @GetMapping("/report/latest")
+    public ResponseEntity<?> getLatestReports(
+            @RequestParam(value = "limit", defaultValue = "5") int limit) {
+        try {
+            List<ReportResponseDto> list = dashboardService.getLatestReports(limit);
+            return ResponseEntity.ok(list);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("최근 신고 내역 조회 실패: " + e.getMessage());
+        }
+    }
+    
+    // --------------- SELLER ---------------
     // 판매자 승인 대기 수 
     @GetMapping("/seller/pending-count")
     public ResponseEntity<?> getPendingSellerCount() {
@@ -115,17 +158,14 @@ public class AdminDashboardController {
         }
     }
 
-    // 최근 삭제된 게시물 통계
-    @GetMapping("/board/recent-deleted")
-    public ResponseEntity<?> getRecentDeletedBoards(
-        @RequestParam(value = "todayOnly", required = false) Boolean todayOnly,
-        @RequestParam(value = "limit", defaultValue = "10") int limit) {
-
+    @GetMapping("/seller/pending")
+    public ResponseEntity<?> getPendingSellerList(
+            @RequestParam(value = "limit", defaultValue = "5") int limit) {
         try {
-            List<AdminBoardListDTO> list = dashboardService.getRecentDeletedBoards(todayOnly, limit);
+            List<SellerPendingDTO> list = dashboardService.getPendingSellers(limit);
             return ResponseEntity.ok(list);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("최근 삭제된 게시물 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body("판매자 승인 대기 목록 조회 실패: " + e.getMessage());
         }
     }
 }

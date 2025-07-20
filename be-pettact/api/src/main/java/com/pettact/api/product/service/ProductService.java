@@ -2,14 +2,17 @@ package com.pettact.api.product.service;
 
 import java.nio.file.AccessDeniedException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -76,11 +79,24 @@ public class ProductService implements ViewCountSyncable<Long> {
 		
 		String preventKey = "product:viewed:" + sessionId + ":" + productNo;
 		
-        if (Boolean.FALSE.equals(redisTemplate.hasKey(preventKey))) {
-            viewCountService.increaseViewCount("product", productNo, 120);
-            redisTemplate.opsForZSet().incrementScore("product:popular", productNo.toString(), 1);
-            redisTemplate.opsForValue().set(preventKey, "1", Duration.ofMinutes(60));
-        }
+		if (Boolean.FALSE.equals(redisTemplate.hasKey(preventKey))) {
+		    viewCountService.increaseViewCount("product", productNo, 120);
+
+		    String today = LocalDate.now().toString(); // "2025-07-15"
+		    Long categoryId = product.getProductCategory().getCategoryNo();
+
+		    // 전체 인기 ZSet
+		    String globalKey = "product:popular:" + today;
+		    redisTemplate.opsForZSet().incrementScore(globalKey, productNo.toString(), 1);
+		    redisTemplate.expire(globalKey, Duration.ofDays(8));
+
+		    // 카테고리별 인기 ZSet
+		    String categoryKey = "product:popular:" + categoryId + ":" + today;
+		    redisTemplate.opsForZSet().incrementScore(categoryKey, productNo.toString(), 1);
+		    redisTemplate.expire(categoryKey, Duration.ofDays(8));
+
+		    redisTemplate.opsForValue().set(preventKey, "1", Duration.ofMinutes(60));
+		}
 
 		List<MultiFile> files = fileService.getFilesByReference(MultiFile.ReferenceTable.PRODUCT, productNo);
 
@@ -327,33 +343,42 @@ public class ProductService implements ViewCountSyncable<Long> {
     }
     
     // ------------------ 인기 상품 TOP 10 ------------------    
-    public List<ProductDTO> getPopularProducts(int count) {
-        // 1. Redis ZSet에서 인기 상품 번호를 조회수 높은 순으로 가져오기
-        Set<String> productNos = redisTemplate.opsForZSet()
-            .reverseRange("product:popular", 0, count - 1);
-
-        if (productNos == null || productNos.isEmpty()) return List.of();
-
-        // 2. 문자열 → Long 변환
-        List<Long> ids = productNos.stream()
-            .map(Long::parseLong)
-            .toList();
-
-        // 3. DB 조회 (findAllById는 순서를 보장하지 않음)
-        List<ProductEntity> products = productRepository.findAllById(ids);
-
-        // 4. ID 기준으로 Map 생성해서 순서 보정
-        Map<Long, ProductEntity> productMap = products.stream()
-            .collect(Collectors.toMap(ProductEntity::getProductNo, Function.identity()));
-
-        // 5. ID 순회하며 DTO로 변환, 누락된 상품은 제외
-        return ids.stream()
-            .map(productMap::get)
-            .filter(Objects::nonNull)                     // DB에 없는 상품 제거
-            .filter(ProductEntity::isActive)              // 예: status = true
-            .map(product -> mapper.map(product, ProductDTO.class))
-            .toList();
-    }
+	public List<ProductDTO> getPopularProducts(Long categoryNo, int count) {
+	    // 1. 최근 7일 날짜별 키 구성
+	    List<String> dateKeys = IntStream.rangeClosed(0, 6)
+	        .mapToObj(i -> {
+	            String date = LocalDate.now().minusDays(i).toString();
+	            return (categoryNo == null)
+	                ? "product:popular:" + date
+	                : "product:popular:" + categoryNo + ":" + date;
+	        })
+	        .toList();
+	
+	    // 2. 임시 키로 합산
+	    String tempKey = "product:popular:temp:" + UUID.randomUUID();
+	    redisTemplate.opsForZSet().unionAndStore(dateKeys.get(0), dateKeys.subList(1, dateKeys.size()), tempKey);
+	
+	    // 3. 인기 상품 조회
+	    Set<String> productNos = redisTemplate.opsForZSet()
+	        .reverseRange(tempKey, 0, count - 1);
+	
+	    redisTemplate.delete(tempKey);
+	
+	    if (productNos == null || productNos.isEmpty()) return List.of();
+	
+	    // 4. DB 조회 + 순서 보정
+	    List<Long> ids = productNos.stream().map(Long::parseLong).toList();
+	    List<ProductEntity> products = productRepository.findAllById(ids);
+	    Map<Long, ProductEntity> map = products.stream()
+	        .collect(Collectors.toMap(ProductEntity::getProductNo, Function.identity()));
+	
+	    // 5. DTO 변환
+	    return ids.stream()
+	        .map(map::get)
+	        .filter(Objects::nonNull)
+	        .map(product -> mapper.map(product, ProductDTO.class)) // or ProductDTO.fromEntity(product)
+	        .toList();
+	}
 
     // 
     public Page<ProductDTO> getMyProducts(Long userNo, String keyword, Long categoryNo, String sort, int page, int size) {

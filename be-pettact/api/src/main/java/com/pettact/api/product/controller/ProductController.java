@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -97,6 +98,7 @@ public class ProductController {
     }
     
     // 상품 등록
+    @PreAuthorize("hasAnyAuthority('ROLE_SELLER', 'ROLE_ADMIN')")
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, Object>> createProduct(
             @RequestPart("product") String productJson,
@@ -131,7 +133,9 @@ public class ProductController {
     
     // ------------------ 인기 상품 TOP 10 ------------------
     @GetMapping("/popular")
-    public List<ProductDTO> getPopularProducts(@RequestParam(value = "count" , defaultValue = "5") int count) {
-        return productService.getPopularProducts(count);
+    public List<ProductDTO> getPopularProducts(
+    		@RequestParam(value = "categoryNo", required = false) Long categoryNo,
+    		@RequestParam(value = "count" , defaultValue = "5") int count) {
+        return productService.getPopularProducts(categoryNo, count);
     }
 }

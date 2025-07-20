@@ -1,95 +1,146 @@
 <template>
   <div class="container mt-4">
-    <h2>반려동물 등록</h2>
-    <form @submit.prevent="registerPet">
-      <!-- 축종 선택 -->
-      <select v-model="selectedUpKindCd" @change="fetchKinds" class="form-control mb-2" required>
-        <option value="">축종 선택</option>
-        <option value="417000">개</option>
-        <option value="422400">고양이</option>
-        <option value="429900">기타</option>
-      </select>
+    <h2>보호소 등록</h2>
+    <form @submit.prevent="submitForm" class="mt-3">
+      <!-- 보호소명 -->
+      <div class="mb-3">
+        <label class="form-label">보호소명</label>
+        <input v-model="form.careNm" type="text" class="form-control" required />
+      </div>
 
-      <!-- 품종 선택 -->
-      <select v-model="pet.kindCd" @change="handleKindChange" class="form-control mb-2" required>
-        <option value="">품종 선택</option>
-        <option v-for="k in kindList" :key="k.kindCd" :value="k.kindCd">
-          {{ k.kindNm }}
-        </option>
-      </select>
+      <!-- 보호소 코드 -->
+      <div class="mb-3">
+        <label class="form-label">보호소 코드</label>
+        <input v-model="form.careRegNo" type="text" class="form-control" required />
+      </div>
 
-      <!-- 나머지 입력 항목들 -->
-      <input v-model="pet.petName" class="form-control mb-2" placeholder="이름" required />
+      <!-- 시도 / 시군구 선택 -->
+      <div class="mb-3 d-flex gap-2">
+        <select v-model="selectedSido" @change="handleSidoChange" class="form-select w-auto" required>
+          <option value="">시도 선택</option>
+          <option v-for="s in sidoList" :key="s.orgCd" :value="s">{{ s.orgdownNm }}</option>
+        </select>
+        <select v-model="selectedSigungu" @change="handleSigunguChange" class="form-select w-auto">
+          <option value="">시군구 선택</option>
+          <option v-for="g in sigunguList" :key="g.orgCd" :value="g">{{ g.orgdownNm }}</option>
+        </select>
+      </div>
 
-      <select v-model="pet.petGender" class="form-control mb-2" required>
-        <option value="">성별 선택</option>
-        <option value="M">수컷 (M)</option>
-        <option value="F">암컷 (F)</option>
-      </select>
+      <!-- 주소 검색 -->
+      <div class="mb-3">
+        <label class="form-label">도로명 주소</label>
+        <div class="input-group">
+          <input v-model="form.careAddr" type="text" class="form-control" readonly required />
+          <button type="button" class="btn btn-outline-secondary" @click="openDaumPostcode">주소 검색</button>
+        </div>
+      </div>
 
-      <select v-model="pet.isNeutered" class="form-control mb-2" required>
-        <option value="">중성화 여부</option>
-        <option value="Y">예 (Y)</option>
-        <option value="N">아니오 (N)</option>
-      </select>
+      <!-- 전화번호 -->
+      <div class="mb-3">
+        <label class="form-label">전화번호</label>
+        <input v-model="form.careTel" type="text" class="form-control" required />
+      </div>
 
-      <input v-model="pet.rfidNo" class="form-control mb-2" placeholder="RFID 번호" />
-      <input v-model="pet.petWeight" class="form-control mb-2" type="number" step="0.1" placeholder="몸무게" />
-      <input v-model="pet.petBirth" class="form-control mb-2" type="date" placeholder="생일" />
-      <input v-model="pet.petImageUrl" class="form-control mb-2" placeholder="이미지 URL" />
+      <!-- orgNm (자동입력) -->
+      <input type="hidden" v-model="form.orgNm" />
+      <!-- 위도/경도 (자동입력) -->
+      <input type="hidden" v-model="form.lat" />
+      <input type="hidden" v-model="form.lng" />
 
-      <button type="submit" class="btn btn-primary">등록</button>
+      <!-- 등록 버튼 -->
+      <button type="submit" class="btn btn-primary">등록하기</button>
     </form>
   </div>
 </template>
-
 <script setup>
-import { ref } from 'vue';
-import axios from 'axios';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
 
-const router = useRouter();
+const router = useRouter()
 
-const pet = ref({
-  kindCd: '',
-  kindNm: '',
-  petName: '',
-  petGender: '',
-  isNeutered: '',
-  rfidNo: '',
-  petWeight: null,
-  petBirth: '',
-  petImageUrl: ''
-});
+const form = ref({
+  careNm: '',
+  careRegNo: '',
+  orgNm: '',
+  careAddr: '',
+  careTel: '',
+  lat: '',
+  lng: ''
+})
 
-const selectedUpKindCd = ref('');
-const kindList = ref([]);
+const sidoList = ref([])
+const sigunguList = ref([])
+const selectedSido = ref('')
+const selectedSigungu = ref('')
 
-const fetchKinds = () => {
-  pet.value.kindCd = '';
-  pet.value.kindNm = '';
-  kindList.value = [];
+onMounted(() => {
+  axios.get('/v1/pet/sido').then(res => {
+    sidoList.value = res.data.items
+  })
+  const kakaoScript = document.createElement('script')
+  kakaoScript.src = '//dapi.kakao.com/v2/maps/sdk.js?appkey=becfe069cca65d679dc79f6ef0a6cee7&libraries=services'
+  kakaoScript.async = true
+  document.head.appendChild(kakaoScript)
 
-  if (!selectedUpKindCd.value) return;
+  const postcodeScript = document.createElement('script')
+  postcodeScript.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+  postcodeScript.async = true
+  document.head.appendChild(postcodeScript)
 
-  axios.get('/v1/pet/kind', {
-    params: { upKindCd: selectedUpKindCd.value }
-  }).then(res => {
-    kindList.value = res.data.items;
-  });
-};
+})
 
-const handleKindChange = () => {
-  const selected = kindList.value.find(k => k.kindCd === pet.value.kindCd);
-  if (selected) {
-    pet.value.kindNm = selected.kindNm;
+const handleSidoChange = () => {
+  selectedSigungu.value = ''
+  sigunguList.value = []
+  form.value.orgNm = ''
+
+  if (selectedSido.value) {
+    axios.get('/v1/pet/sigungu', {
+      params: { uprCd: selectedSido.value.orgCd }
+    }).then(res => {
+      sigunguList.value = res.data.items
+    })
   }
-};
+}
 
-const registerPet = () => {
-  axios.post('/v1/pet', pet.value).then(() => {
-    alert('등록 성공');
-    router.push('/userPet');
-  });
-};
+const handleSigunguChange = () => {
+  if (selectedSido.value && selectedSigungu.value) {
+    form.value.orgNm = selectedSido.value.orgdownNm + ' ' + selectedSigungu.value.orgdownNm
+  }
+}
+
+// 다음 주소 API + 카카오 좌표 변환
+const openDaumPostcode = () => {
+  new window.daum.Postcode({
+    oncomplete: function (data) {
+      form.value.careAddr = data.roadAddress
+      const geocoder = new window.kakao.maps.services.Geocoder()
+      geocoder.addressSearch(data.roadAddress, (result, status) => {
+        if (status === window.kakao.maps.services.Status.OK) {
+          form.value.lat = result[0].y
+          form.value.lng = result[0].x
+        }
+      })
+    }
+  }).open()
+}
+
+const submitForm = () => {
+  axios.post('/v1/api/shelter', form.value)
+    .then(() => {
+      alert('등록 완료!')
+      router.push('/shelter')
+    })
+    .catch(err => {
+      console.error('등록 실패', err)
+      alert('등록 실패')
+    })
+}
 </script>
+
+<style scoped>
+select.form-select {
+  min-width: 160px;
+}
+</style>

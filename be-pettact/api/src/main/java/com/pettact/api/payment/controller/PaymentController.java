@@ -32,6 +32,7 @@ public class PaymentController {
 	    System.out.println("📥 결제 승인 요청 수신");
 	    System.out.println("paymentKey: " + request.getPaymentKey());
 	    System.out.println("orderId: " + request.getOrderId());
+	    System.out.println("orderNo: " + request.getOrderNo());
 	    System.out.println("amount: " + request.getAmount());
 	    
         PaymentResponseDTO response = paymentService.confirmPayment(request);

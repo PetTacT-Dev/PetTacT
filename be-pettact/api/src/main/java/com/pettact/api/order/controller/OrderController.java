@@ -47,7 +47,7 @@ public class OrderController {
     
     // 주문 등록 
     @PostMapping
-    public ResponseEntity<OrderDTO> createOrder(@AuthenticationPrincipal CustomUserDetails user, @RequestBody OrderDTO.CreateRequest request) {
+    public ResponseEntity<OrderDTO> createOrder(@AuthenticationPrincipal CustomUserDetails user,@RequestBody OrderDTO.CreateRequest request) {
         return ResponseEntity.ok(orderService.createOrder(user.getUserEntity(), request));
     }
     

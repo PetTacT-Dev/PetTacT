@@ -21,4 +21,8 @@ public interface ReplyRecommendRepository extends JpaRepository<ReplyRecommend, 
 
     @Query("SELECT COUNT(rr) FROM ReplyRecommend rr WHERE rr.reply.replyNo = :replyNo")
     int countByReplyNo(@Param("replyNo") Long replyNo);
+
+    int countByReply_ReplyNo(Long replyNo);
+
+    Optional<Object> findByReply_ReplyNoAndUsers_UserNo(Long replyNo, Long userNo);
 }
