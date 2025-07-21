@@ -52,6 +52,7 @@ import { useUserStore } from '@/stores/user';
 import NotificationDropdown from './notification/NotificationDropdown.vue';
 import { useModalStore } from '@/js/modalStore'
 
+
 const router = useRouter();
 const userStore = useUserStore();
 const modalStore = useModalStore();
@@ -69,7 +70,7 @@ const goHome = () => router.push('/');
 const goToLogin = () => router.push({ name: 'login' });
 const goToSignup = () => router.push({ name: 'join' });
 const goToUserPet = () => router.push({ name: 'userPetList' });
-const goToBoardCategoryList = () => router.push('/boardCategoryList');
+// const goToBoardCategoryList = () => router.push('/boardCategoryList');
 const goToMyInfo = () => router.push({ name: 'myInfo' });
 const goToUpdateProfile = () => router.push('/user/update');
 const goToAdminDashboard = () => router.push({ name: 'adminDashboard' });
@@ -85,6 +86,12 @@ const openChatModal = () => {
 const toggleProfileDropdown = () => {
   isProfileDropdownOpen.value = !isProfileDropdownOpen.value;
 };
+
+const goToBoardCategoryList = () => {
+  // 관리자든 사용자든 모두 게시판 목록 페이지로 이동
+  router.push('/boardCategoryList')
+}
+
 
 // 외부 클릭 시 드롭다운 닫기
 const handleClickOutside = (e) => {

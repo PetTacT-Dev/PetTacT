@@ -270,17 +270,42 @@ const loadBoards = async () => {
 }
 
 // 카테고리 정보 로드
+// const loadCategoryInfo = async () => {
+//   try {
+//     const categoryNo = route.params.categoryNo
+//     const response = await axios.get(`/v1/board-categories/${categoryNo}`)
+    
+//     boardConfig.value = {
+//       title: response.data.boardCategoryTitle || '게시판',
+//       description: response.data.boardCategoryDescription || '',
+//       icon: '📋',
+//       searchPlaceholder: '검색어를 입력하세요',
+//       listType: 'list'
+//     }
+//   } catch (error) {
+//     console.error('카테고리 로드 실패:', error)
+//   }
+// }
 const loadCategoryInfo = async () => {
   try {
     const categoryNo = route.params.categoryNo
-    const response = await axios.get(`/v1/board-categories/${categoryNo}`)
     
-    boardConfig.value = {
-      title: response.data.boardCategoryTitle || '게시판',
-      description: response.data.boardCategoryDescription || '',
-      icon: '📋',
-      searchPlaceholder: '검색어를 입력하세요',
-      listType: 'list'
+    // 이미 로드된 카테고리 목록에서 찾기
+    const category = boardCategories.value.find(cat => 
+      cat.boardCategoryNo == categoryNo
+    )
+    
+    if (category) {
+      boardConfig.value = {
+        title: category.boardCategoryTitle,  // "입양후기"
+        description: category.boardCategoryDescription,
+        icon: '📋',
+        searchPlaceholder: '검색어를 입력하세요',
+        listType: 'list'
+      }
+      console.log('✅ 카테고리 정보 설정:', category.boardCategoryTitle)
+    } else {
+      console.log('⚠️ 카테고리를 찾을 수 없음:', categoryNo)
     }
   } catch (error) {
     console.error('카테고리 로드 실패:', error)
