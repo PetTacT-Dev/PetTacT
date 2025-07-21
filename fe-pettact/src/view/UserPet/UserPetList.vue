@@ -51,8 +51,8 @@ const page = ref(1)
 const totalPages = ref(1)
 
 const goPage = (targetPage) => {
-  axios.get('/v1/pet/list', { params: { page: targetPage, size: 10 } })
-    .then(res => {
+  axios.get('/v1/pet/list', { params: { page: targetPage, size: 9 } })
+    .then(res => { 
       petList.value = res.data.content
       totalPages.value = res.data.totalPages
       page.value = targetPage

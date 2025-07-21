@@ -118,8 +118,8 @@ import { ref, onMounted, computed } from 'vue'
 import { useProductStore } from '@/stores/product'
 import { useUserStore } from '@/stores/user'
 
-import banner1 from '@/assets/반려동물 용품1.jpg'
-import banner2 from '@/assets/반려동물 용품3.jpg'
+//import banner1 from '@/assets/반려동물 용품1.jpg'//
+//import banner2 from '@/assets/반려동물 용품3.jpg'
 
 const productStore = useProductStore()
 const router = useRouter()
