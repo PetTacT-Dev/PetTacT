@@ -1,12 +1,8 @@
 <template>
-  <div class="row">
-    <div class="col-6 mb-3" v-for="card in cards" :key="card.label">
-      <div class="card text-center h-100">
-        <div class="card-body">
-          <h5 class="card-title">{{ card.label }}</h5>
-          <p class="card-text fs-4">{{ card.value }}</p>
-        </div>
-      </div>
+  <div class="kpi-wrapper">
+    <div class="kpi-card" v-for="card in cards" :key="card.label">
+      <h5 class="card-title">{{ card.label }}</h5>
+      <p class="card-value">{{ card.value }}</p>
     </div>
   </div>
 </template>
@@ -68,3 +64,34 @@ onMounted(async () => {
 });
 
 </script>
+
+<style scoped>
+.kpi-wrapper {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.kpi-card {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.card-title {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.card-value {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #000;
+}
+</style>
