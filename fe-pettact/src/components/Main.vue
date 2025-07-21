@@ -2,148 +2,70 @@
   <div class="main-page">
     <!-- banner section -->
     <section class="hero">
-    <div 
-      class="swiper-wrapper" 
-      :style="swiperStyle"
-      @mouseenter="pauseAutoSlide"
-      @mouseleave="resumeAutoSlide"
-    >
-      <!-- 각 배너 슬라이드 -->
-      <div 
-        v-for="(banner, index) in banners" 
-        :key="`slide-${index}`"
-        class="swiper-slide"
-      >
-        <!-- 배너 이미지 -->
-        <div class="banner-image-container">
-          <img 
-            :src="banner.image" 
-            :alt="banner.alt" 
-            class="banner-image"
-            @error="handleImageError"
-          />
-        </div>
-        
-        <!-- 배너 텍스트 (각 슬라이드마다 개별) -->
-        <div class="banner-overlay">
-          <div class="banner-content">
-            <h1 class="banner-title">{{ banner.title }}</h1>
-            <p class="banner-subtitle">{{ banner.subtitle }}</p>
-            <a :href="banner.link" class="banner-cta">
-              <span>{{ banner.buttonText }}</span>
-              <span class="cta-arrow">→</span>
-            </a>
+      <div class="swiper-wrapper" :style="swiperStyle" @mouseenter="pauseAutoSlide" @mouseleave="resumeAutoSlide">
+        <!-- 각 배너 슬라이드 -->
+        <div v-for="(banner, index) in banners" :key="`slide-${index}`" class="swiper-slide">
+          <!-- 배너 이미지 -->
+          <div class="banner-image-container">
+            <img :src="banner.image" :alt="banner.alt" class="banner-image" @error="handleImageError" />
+          </div>
+
+          <!-- 배너 텍스트 (각 슬라이드마다 개별) -->
+          <div class="banner-overlay">
+            <div class="banner-content">
+              <h1 class="banner-title">{{ banner.title }}</h1>
+              <p class="banner-subtitle">{{ banner.subtitle }}</p>
+              <a :href="banner.link" class="banner-cta">
+                <span>{{ banner.buttonText }}</span>
+                <span class="cta-arrow">→</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    
-    <!-- 인디케이터 -->
-    <div class="swiper-pagination">
-      <button 
-        v-for="(_, index) in banners"
-        :key="index"
-        class="pagination-bullet"
-        :class="{ 'pagination-bullet-active': currentIndex === index }"
-        @click="goToSlide(index)"
-      >
-      </button>
-    </div>
-    
-    <!-- 네비게이션 버튼 -->
-    <button class="swiper-button-prev" @click="prevSlide">‹</button>
-    <button class="swiper-button-next" @click="nextSlide">›</button>
-  </section>
 
-  <!-- Community Section -->
-  <section class="community-section">
-    <div class="community-container">
-      <!-- 인기글 커뮤니티 카드 -->
-      <div class="community-card">
-        <div class="card-header">
-          <h3 class="card-title">인기글 커뮤니티</h3>
-          <a href="/board" class="more-link">더보기 <span>⟩</span></a>
-        </div>
-        <div class="board-list">
-          <div 
-            v-for="board in popularBoards" 
-            :key="board.boardNo" 
-            class="board-item"
-            @click="goToBoard(board.boardCategory.id, board.boardNo)"
-          >
-            <span class="board-category">{{ board.boardCategory.name }}</span>
-            <span class="board-title">{{ board.boardTitle }}</span>
-            <div class="board-stats" v-if="board.stats">
-              <div class="like-count">
-                <img src="https://placehold.co/10x10" alt="like" />
-                <span>{{ board.stats.likes }}</span>
+      <!-- 인디케이터 -->
+      <div class="swiper-pagination">
+        <button v-for="(_, index) in banners" :key="index" class="pagination-bullet"
+          :class="{ 'pagination-bullet-active': currentIndex === index }" @click="goToSlide(index)">
+        </button>
+      </div>
+
+      <!-- 네비게이션 버튼 -->
+      <button class="swiper-button-prev" @click="prevSlide">‹</button>
+      <button class="swiper-button-next" @click="nextSlide">›</button>
+    </section>
+
+    <!-- Community Section -->
+    <section class="community-section">
+      <div class="community-container">
+        <!-- 인기글 커뮤니티 카드 -->
+        <PopularBoards />
+
+        <!-- 인기포토 갤러리 -->
+        <div class="photo-gallery">
+          <div class="card-header">
+            <h3 class="card-title">인기포토</h3>
+            <a href="/board/photo" class="more-link">더보기 <span>⟩</span></a>
+          </div>
+          <div class="gallery-images">
+            <div v-for="photo in popularPhotos" :key="photo.boardNo" class="gallery-item"
+              @click="goToBoard(photo.boardCategory.id, photo.boardNo)">
+              <img class="gallery-img" :src="photo.imageUrl" :alt="photo.boardTitle" />
+              <div class="gallery-caption">
+                <span>{{ photo.boardCategory.name }}</span>
+                <span>{{ photo.boardTitle }}</span>
               </div>
-              <div class="view-count">{{ formatViewCount(board.stats.views) }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 인기포토 갤러리 -->
-      <div class="photo-gallery">
-        <div class="card-header">
-          <h3 class="card-title">인기포토</h3>
-          <a href="/board/photo" class="more-link">더보기 <span>⟩</span></a>
-        </div>
-        <div class="gallery-images">
-          <div 
-            v-for="photo in popularPhotos" 
-            :key="photo.boardNo" 
-            class="gallery-item"
-            @click="goToBoard(photo.boardCategory.id, photo.boardNo)"
-          >
-            <img 
-              class="gallery-img" 
-              :src="photo.imageUrl" 
-              :alt="photo.boardTitle" 
-            />
-            <div class="gallery-caption">
-              <span>{{ photo.boardCategory.name }}</span>
-              <span>{{ photo.boardTitle }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-   <!-- Adoption Section -->
-    <section class="adoption-section">
-      <div class="adoption-container">
-        <div class="adoption-bg">
-          <div class="pet-image-container">
-            <button class="nav-button nav-button-left" @click="prevPet">
-              <span style="color: white;">←</span>
-            </button>
-            <img 
-              class="pet-image" 
-              :src="adoptionPets[currentPetIndex]?.image || 'https://placehold.co/448x458'" 
-              :alt="adoptionPets[currentPetIndex]?.name + ' - Pet for Adoption'" 
-            />
-            <button class="nav-button nav-button-right" @click="nextPet">
-              <span style="color: white;">→</span>
-            </button>
-          </div>
-          <div class="adoption-info">
-            <h2 class="adoption-title">입양안내</h2>
-            <p class="adoption-subtitle">새로운 가족을 기다리는 유기동물들의 정보를<br/>간편하게 확인해보세요.</p>
-            <div class="pet-info" v-if="adoptionPets[currentPetIndex]">
-              <h3 class="pet-name">이름 : {{ adoptionPets[currentPetIndex].name }}</h3>
-              <p class="pet-details">{{ adoptionPets[currentPetIndex].breed }} / {{ adoptionPets[currentPetIndex].gender }} / {{ adoptionPets[currentPetIndex].age }}</p>
-              <p class="pet-location">📍 {{ adoptionPets[currentPetIndex].location }} • {{ adoptionPets[currentPetIndex].organization }}</p>
-              <p class="pet-description">{{ adoptionPets[currentPetIndex].description }}</p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-     <!-- Features Section -->
+    <!-- Adoption Section -->
+    <AdoptionBanner />
+
+    <!-- Features Section -->
     <section class="features-section">
       <div class="features-container">
         <div class="features-grid">
@@ -152,13 +74,13 @@
               <div class="feature-number">01</div>
               <div class="feature-icon">❤️</div>
               <h3 class="feature-title">사랑으로 연결</h3>
-              <p class="feature-description">새로운 가족을 기다리는 유기동물들의 정보를<br/>편하게 확인해보세요.</p>
+              <p class="feature-description">새로운 가족을 기다리는 유기동물들의 정보를<br />편하게 확인해보세요.</p>
             </div>
             <div class="feature-card">
               <div class="feature-number">02</div>
               <div class="feature-icon">⭐</div>
               <h3 class="feature-title">특별한 추억</h3>
-              <p class="feature-description">반려동물과의 소중한 순간들을 기록하고<br/>공유해요.</p>
+              <p class="feature-description">반려동물과의 소중한 순간들을 기록하고<br />공유해요.</p>
             </div>
           </div>
           <div class="features-row">
@@ -166,31 +88,32 @@
               <div class="feature-number">03</div>
               <div class="feature-icon">🤝</div>
               <h3 class="feature-title">따뜻한 커뮤니티</h3>
-              <p class="feature-description">같은 마음을 가진 사람들과 소통하고<br/>정보를 나눠요.</p>
+              <p class="feature-description">같은 마음을 가진 사람들과 소통하고<br />정보를 나눠요.</p>
             </div>
             <div class="feature-card">
               <div class="feature-number">04</div>
               <div class="feature-icon">🛒</div>
               <h3 class="feature-title">우리가 만드는 마켓</h3>
-              <p class="feature-description">반려인들이 직접 참여하는 따뜻한 마켓을<br/>이용해보세요.</p>
+              <p class="feature-description">반려인들이 직접 참여하는 따뜻한 마켓을<br />이용해보세요.</p>
             </div>
           </div>
         </div>
-        
+
         <!-- 오른쪽 버튼들 -->
         <div class="features-buttons">
           <div class="matching-button" @click="goToMatching">
             <div class="matching-button-content">
               <div class="matching-button-title">🎯 운명의 반려동물 매칭하기</div>
-              <div class="matching-button-description">성격과 라이프스타일을 분석해서<br/>완벽한 파트너를 찾아보세요.</div>
+              <div class="matching-button-description">성격과 라이프스타일을 분석해서<br />완벽한 파트너를 찾아보세요.</div>
             </div>
             <div class="matching-button-arrow"></div>
           </div>
-          
+
           <div class="diary-button" @click="goToDiary">
             <div class="diary-button-content">
               <div class="diary-button-title">💕 반려동물 시선으로 보는 하루</div>
-              <div class="diary-button-description">반려동물의 눈으로 바라본 하루를 일기로 남겨보세요.<br/>오늘 있었던 특별한 순간들을 기록하고 추억을 만들어보세요.</div>
+              <div class="diary-button-description">반려동물의 눈으로 바라본 하루를 일기로 남겨보세요.<br />오늘 있었던 특별한 순간들을 기록하고 추억을 만들어보세요.
+              </div>
             </div>
             <div class="diary-button-arrow"></div>
           </div>
@@ -203,8 +126,15 @@
 
 <script>
 import axios from 'axios'
+import PopularBoards from './mainPage/PopularBoards.vue'
+import AdoptionBanner from './mainPage/AdoptionBanner.vue'
+
 export default {
   name: 'MainPage',
+  components: {
+    PopularBoards,
+    AdoptionBanner
+  },
   data() {
     return {
       // 배너 관련 데이터
@@ -213,7 +143,7 @@ export default {
       autoSlideTimer: null,
       isPaused: false,
       slideSpeed: 5000,
-      
+
       banners: [
         {
           id: 1,
@@ -245,65 +175,65 @@ export default {
       ],
 
       // 커뮤니티 관련 데이터
-      popularBoards: [
-        {
-          boardNo: 1523,
-          boardTitle: '귀여운 실키테리어 모리 안뇽하세용✌️',
-          boardCategory: { id: 1, name: '입양후기 게시판' },
-          user: { nickname: 'user123' },
-          stats: { likes: 52, views: 2500 },
-          createdAt: '2025-07-09T10:30:00Z'
-        },
-        {
-          boardNo: 1524,
-          boardTitle: '화이트 테리어 입양 고민되네여,,',
-          boardCategory: { id: 2, name: '자유 게시판' },
-          user: { nickname: 'petlover' },
-          stats: { likes: 41, views: 2200 },
-          createdAt: '2025-07-09T09:15:00Z'
-        },
-        {
-          boardNo: 1525,
-          boardTitle: '❗급해요 ️6개월 슈나우저 이갈이 관련 조언요!!',
-          boardCategory: { id: 3, name: '육아 Q&A 게시판' },
-          user: { nickname: 'dogmom' },
-          stats: { likes: 22, views: 1800 },
-          createdAt: '2025-07-09T08:45:00Z'
-        },
-        {
-          boardNo: 1526,
-          boardTitle: 'OO 선글라스 구입 후기 😎 (*강아지 사진 매우많음)',
-          boardCategory: { id: 4, name: '쇼핑몰 후기 게시판' },
-          user: { nickname: 'shoppingking' },
-          stats: { likes: 25, views: 2300 },
-          createdAt: '2025-07-09T07:20:00Z'
-        },
-        {
-          boardNo: 1527,
-          boardTitle: '저희 렉돌 자랑합니당',
-          boardCategory: { id: 2, name: '자유 게시판' },
-          user: { nickname: 'catlover' },
-          stats: { likes: 15, views: 1200 },
-          createdAt: '2025-07-09T06:10:00Z'
-        },
-        {
-          boardNo: 1528,
-          boardTitle: '반려동물 일기 관련 v 1.0 patch 후기',
-          boardCategory: { id: 5, name: '공지사항 게시판' },
-          user: { nickname: 'admin' },
-          stats: { likes: 0, views: 3200 },
-          createdAt: '2025-07-08T15:30:00Z'
-        },
-        {
-          boardNo: 1529,
-          boardTitle: '송파 지역 동물병원 추천 받아요!!!',
-          boardCategory: { id: 2, name: '자유 게시판' },
-          user: { nickname: 'seoul_pet' },
-          stats: { likes: 13, views: 721 },
-          createdAt: '2025-07-08T14:45:00Z'
-        }
-      ],
-      
+      // popularBoards: [
+      //   {
+      //     boardNo: 1523,
+      //     boardTitle: '귀여운 실키테리어 모리 안뇽하세용✌️',
+      //     boardCategory: { id: 1, name: '입양후기 게시판' },
+      //     user: { nickname: 'user123' },
+      //     stats: { likes: 52, views: 2500 },
+      //     createdAt: '2025-07-09T10:30:00Z'
+      //   },
+      //   {
+      //     boardNo: 1524,
+      //     boardTitle: '화이트 테리어 입양 고민되네여,,',
+      //     boardCategory: { id: 2, name: '자유 게시판' },
+      //     user: { nickname: 'petlover' },
+      //     stats: { likes: 41, views: 2200 },
+      //     createdAt: '2025-07-09T09:15:00Z'
+      //   },
+      //   {
+      //     boardNo: 1525,
+      //     boardTitle: '❗급해요 ️6개월 슈나우저 이갈이 관련 조언요!!',
+      //     boardCategory: { id: 3, name: '육아 Q&A 게시판' },
+      //     user: { nickname: 'dogmom' },
+      //     stats: { likes: 22, views: 1800 },
+      //     createdAt: '2025-07-09T08:45:00Z'
+      //   },
+      //   {
+      //     boardNo: 1526,
+      //     boardTitle: 'OO 선글라스 구입 후기 😎 (*강아지 사진 매우많음)',
+      //     boardCategory: { id: 4, name: '쇼핑몰 후기 게시판' },
+      //     user: { nickname: 'shoppingking' },
+      //     stats: { likes: 25, views: 2300 },
+      //     createdAt: '2025-07-09T07:20:00Z'
+      //   },
+      //   {
+      //     boardNo: 1527,
+      //     boardTitle: '저희 렉돌 자랑합니당',
+      //     boardCategory: { id: 2, name: '자유 게시판' },
+      //     user: { nickname: 'catlover' },
+      //     stats: { likes: 15, views: 1200 },
+      //     createdAt: '2025-07-09T06:10:00Z'
+      //   },
+      //   {
+      //     boardNo: 1528,
+      //     boardTitle: '반려동물 일기 관련 v 1.0 patch 후기',
+      //     boardCategory: { id: 5, name: '공지사항 게시판' },
+      //     user: { nickname: 'admin' },
+      //     stats: { likes: 0, views: 3200 },
+      //     createdAt: '2025-07-08T15:30:00Z'
+      //   },
+      //   {
+      //     boardNo: 1529,
+      //     boardTitle: '송파 지역 동물병원 추천 받아요!!!',
+      //     boardCategory: { id: 2, name: '자유 게시판' },
+      //     user: { nickname: 'seoul_pet' },
+      //     stats: { likes: 13, views: 721 },
+      //     createdAt: '2025-07-08T14:45:00Z'
+      //   }
+      // ],
+
       popularPhotos: [
         {
           boardNo: 1601,
@@ -373,7 +303,7 @@ export default {
       ]
     }
   },
-  
+
   computed: {
     swiperStyle() {
       return {
@@ -383,57 +313,57 @@ export default {
       }
     }
   },
-  
+
   mounted() {
     this.startAutoSlide()
     this.fetchPopularBoards()
     this.fetchPopularPhotos()
     this.fetchAdoptionPets()
   },
-  
+
   beforeUnmount() {
     this.stopAutoSlide()
   },
-  
+
   methods: {
     // 배너 관련 메서드들
     nextSlide() {
       if (this.isTransitioning) return
-      
+
       this.isTransitioning = true
       this.currentIndex = (this.currentIndex + 1) % this.banners.length
-      
+
       setTimeout(() => {
         this.isTransitioning = false
       }, 600)
     },
-    
+
     prevSlide() {
       if (this.isTransitioning) return
-      
+
       this.isTransitioning = true
-      this.currentIndex = this.currentIndex === 0 
-        ? this.banners.length - 1 
+      this.currentIndex = this.currentIndex === 0
+        ? this.banners.length - 1
         : this.currentIndex - 1
-      
+
       setTimeout(() => {
         this.isTransitioning = false
       }, 600)
     },
-    
+
     goToSlide(index) {
       if (this.isTransitioning || index === this.currentIndex) return
-      
+
       this.isTransitioning = true
       this.currentIndex = index
-      
+
       setTimeout(() => {
         this.isTransitioning = false
       }, 600)
-      
+
       this.resetAutoSlide()
     },
-    
+
     startAutoSlide() {
       this.autoSlideTimer = setInterval(() => {
         if (!this.isPaused) {
@@ -441,27 +371,27 @@ export default {
         }
       }, this.slideSpeed)
     },
-    
+
     stopAutoSlide() {
       if (this.autoSlideTimer) {
         clearInterval(this.autoSlideTimer)
         this.autoSlideTimer = null
       }
     },
-    
+
     resetAutoSlide() {
       this.stopAutoSlide()
       this.startAutoSlide()
     },
-    
+
     pauseAutoSlide() {
       this.isPaused = true
     },
-    
+
     resumeAutoSlide() {
       this.isPaused = false
     },
-    
+
     handleImageError(event) {
       console.error('이미지 로드 실패:', event.target.src)
       event.target.src = 'https://placehold.co/1920x650/cccccc/000000?text=Image+Not+Found'
@@ -474,21 +404,28 @@ export default {
       }
       return views.toString()
     },
-    
+
     goToBoard(categoryId, boardNo) {
       this.$router.push(`/board/${categoryId}/${boardNo}`)
     },
-    
+
     async fetchPopularBoards() {
       try {
-        const response = await fetch('/api/boards/popular?limit=7&period=daily')
-        const data = await response.json()
-        this.popularBoards = data.boards
+        console.log('인기글 요청 시작...')
+        const { data } = await axios.get('/v1/board/popular', {
+          params: {
+            categoryNo: null,
+            count: 7
+          }
+        })
+        console.log('API 응답 데이터:', data)
+        this.popularBoards = data
       } catch (error) {
         console.error('인기글 가져오기 실패:', error)
+        console.error('에러 상세:', error.response?.data)
       }
     },
-    
+
     async fetchPopularPhotos() {
       try {
         const response = await fetch('/api/boards/popular-photos?limit=3&period=daily')
@@ -505,8 +442,8 @@ export default {
     },
 
     prevPet() {
-      this.currentPetIndex = this.currentPetIndex === 0 
-        ? this.adoptionPets.length - 1 
+      this.currentPetIndex = this.currentPetIndex === 0
+        ? this.adoptionPets.length - 1
         : this.currentPetIndex - 1
     },
 
@@ -536,7 +473,8 @@ export default {
 .hero {
   position: relative;
   width: 100%;
-  height: 501px; /* 650px → 501px로 변경 */
+  height: 501px;
+  /* 650px → 501px로 변경 */
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
@@ -556,7 +494,8 @@ export default {
   position: relative;
   width: 100%;
   height: 100%;
-  flex: 0 0 100%; /* 각 슬라이드가 100% 너비 차지 */
+  flex: 0 0 100%;
+  /* 각 슬라이드가 100% 너비 차지 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -587,12 +526,10 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    45deg, 
-    rgba(0, 0, 0, 0.4) 0%, 
-    rgba(0, 0, 0, 0.1) 50%, 
-    rgba(0, 0, 0, 0.4) 100%
-  );
+  background: linear-gradient(45deg,
+      rgba(0, 0, 0, 0.4) 0%,
+      rgba(0, 0, 0, 0.1) 50%,
+      rgba(0, 0, 0, 0.4) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -601,40 +538,52 @@ export default {
 
 /* 배너 콘텐츠 */
 .banner-content {
-  text-align: left; /* center → left로 변경 */
+  text-align: left;
+  /* center → left로 변경 */
   color: white;
   max-width: 800px;
   padding: 0 20px;
   z-index: 3;
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* 모든 요소를 왼쪽 정렬 */
+  align-items: flex-start;
+  /* 모든 요소를 왼쪽 정렬 */
 }
 
 .banner-title {
-  width: auto; /* 텍스트 길이에 맞춰 자동 조정 */
-  display: block; /* flex 제거하고 일반 블록으로 */
+  width: auto;
+  /* 텍스트 길이에 맞춰 자동 조정 */
+  display: block;
+  /* flex 제거하고 일반 블록으로 */
   color: #111111;
   font-size: 38px;
   font-weight: 600;
   line-height: 1.4;
-  padding-left: 0; /* padding 제거 - 박스 시작점에서 텍스트 시작 */
+  padding-left: 0;
+  /* padding 제거 - 박스 시작점에서 텍스트 시작 */
   margin-bottom: 16px;
-  white-space: nowrap; /* 줄바꿈 방지 */
-  overflow: visible; /* 넘치는 텍스트 보이게 */
+  white-space: nowrap;
+  /* 줄바꿈 방지 */
+  overflow: visible;
+  /* 넘치는 텍스트 보이게 */
 }
 
 .banner-subtitle {
-  width: auto; /* 텍스트 길이에 맞춰 자동 조정 */
-  display: block; /* flex 제거하고 일반 블록으로 */
+  width: auto;
+  /* 텍스트 길이에 맞춰 자동 조정 */
+  display: block;
+  /* flex 제거하고 일반 블록으로 */
   color: #111111;
   font-size: 20px;
   font-weight: 400;
   line-height: 1.4;
-  padding-left: 0; /* padding 제거 - 박스 시작점에서 텍스트 시작 */
+  padding-left: 0;
+  /* padding 제거 - 박스 시작점에서 텍스트 시작 */
   margin-bottom: 24px;
-  white-space: nowrap; /* 줄바꿈 방지 */
-  overflow: visible; /* 넘치는 텍스트 보이게 */
+  white-space: nowrap;
+  /* 줄바꿈 방지 */
+  overflow: visible;
+  /* 넘치는 텍스트 보이게 */
 }
 
 /* 배너 CTA */
@@ -763,14 +712,19 @@ export default {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
-  display: flex; /* 가로 배치를 위한 flex */
-  gap: 40px; /* 두 카드 사이 간격 */
-  align-items: stretch; /* 높이를 동일하게 맞춤 */
+  display: flex;
+  /* 가로 배치를 위한 flex */
+  gap: 40px;
+  /* 두 카드 사이 간격 */
+  align-items: stretch;
+  /* 높이를 동일하게 맞춤 */
 }
 
 .community-card {
-  flex: 1; /* 동일한 비율로 공간 분할 */
-  min-height: 400px; /* 최소 높이 설정 */
+  flex: 1;
+  /* 동일한 비율로 공간 분할 */
+  min-height: 400px;
+  /* 최소 높이 설정 */
   background: white;
   border-radius: 12px;
   padding: 24px;
@@ -778,8 +732,10 @@ export default {
 }
 
 .photo-gallery {
-  flex: 1; /* 동일한 비율로 공간 분할 */
-  min-height: 400px; /* 최소 높이 설정 */
+  flex: 1;
+  /* 동일한 비율로 공간 분할 */
+  min-height: 400px;
+  /* 최소 높이 설정 */
   background: white;
   border-radius: 12px;
   padding: 24px;
@@ -818,8 +774,10 @@ export default {
 
 .board-item {
   display: flex;
-  justify-content: space-between; /* 양쪽 끝으로 배치 */
-  align-items: center; /* 세로 중앙 정렬 */
+  justify-content: space-between;
+  /* 양쪽 끝으로 배치 */
+  align-items: center;
+  /* 세로 중앙 정렬 */
   padding: 8px 0;
   border-bottom: 1px solid #f0f0f0;
   cursor: pointer;
@@ -840,15 +798,18 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  flex: 1; /* 남은 공간 모두 차지 */
-  min-width: 0; /* 텍스트 오버플로우 방지 */
+  flex: 1;
+  /* 남은 공간 모두 차지 */
+  min-width: 0;
+  /* 텍스트 오버플로우 방지 */
 }
 
 .board-category {
   font-size: 12px;
   color: #888;
   font-weight: 500;
-  white-space: nowrap; /* 줄바꿈 방지 */
+  white-space: nowrap;
+  /* 줄바꿈 방지 */
 }
 
 .board-title {
@@ -856,18 +817,24 @@ export default {
   color: #333;
   font-weight: 500;
   line-height: 1.4;
-  overflow: hidden; /* 넘치는 텍스트 숨기기 */
-  text-overflow: ellipsis; /* ... 표시 */
-  white-space: nowrap; /* 줄바꿈 방지 */
-  max-width: 100%; /* 최대 너비 제한 */
+  overflow: hidden;
+  /* 넘치는 텍스트 숨기기 */
+  text-overflow: ellipsis;
+  /* ... 표시 */
+  white-space: nowrap;
+  /* 줄바꿈 방지 */
+  max-width: 100%;
+  /* 최대 너비 제한 */
 }
 
 .board-stats {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-shrink: 0; /* 크기 고정 */
-  min-width: 80px; /* 최소 너비 보장 */
+  flex-shrink: 0;
+  /* 크기 고정 */
+  min-width: 80px;
+  /* 최소 너비 보장 */
 }
 
 .like-count {
@@ -926,139 +893,6 @@ export default {
   font-weight: 500;
 }
 
-/* Adoption Section */
-.adoption-section {
-  background-color: #F8F6F2;
-}
-
-.adoption-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-.adoption-bg {
-  background: #F8F6F2;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  padding: 40px;
-  display: flex;
-  align-items: center;
-  gap: 60px;
-  min-height: 500px;
-}
-
-.pet-image-container {
-  flex: 1;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  /* 입체감을 위한 효과 추가 */
-  perspective: 1000px;
-}
-
-.pet-image {
-  width: 400px;
-  height: 400px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  /* 강화된 그림자 효과 */
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.2),
-    0 8px 16px rgba(0, 0, 0, 0.1),
-    0 0 0 8px rgba(255, 255, 255, 0.1);
-  /* 3D 효과 */
-  transform: translateZ(50px) rotateX(-5deg);
-  transition: all 0.3s ease;
-}
-
-.nav-button {
-  width: 48px;
-  height: 48px;
-  background: rgba(0, 0, 0, 0.4);
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  transition: all 0.3s ease;
-}
-
-.nav-button:hover {
-  background: rgba(0, 0, 0, 0.6);
-  transform: scale(1.1);
-}
-
-.nav-button-left {
-  left: -24px;
-}
-
-.nav-button-right {
-  right: -24px;
-}
-
-.adoption-info {
-  flex: 1;
-  background: white;
-  padding: 40px;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.adoption-title {
-  font-size: 32px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
-}
-
-.adoption-subtitle {
-  font-size: 14px;
-  color: #767676;
-  font-weight: 500;
-  line-height: 1.4;
-  margin-bottom: 32px;
-}
-
-.pet-info {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.pet-name {
-  font-size: 24px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.pet-details {
-  font-size: 18px;
-  font-weight: 600;
-  color: #555;
-  margin-bottom: 8px;
-}
-
-.pet-location {
-  font-size: 14px;
-  font-weight: 500;
-  color: #666;
-  margin-bottom: 8px;
-}
-
-.pet-description {
-  font-size: 14px;
-  font-weight: 400;
-  color: #777;
-  line-height: 1.5;
-}
-
 /* Features Section */
 .features-section {
   padding: 40px 0 80px 0;
@@ -1071,19 +905,22 @@ export default {
   padding: 0 20px;
   position: relative;
   display: flex;
-  gap: 40px; /* 좌우 섹션 간격 */
+  gap: 40px;
+  /* 좌우 섹션 간격 */
 }
 
 .features-grid {
   display: flex;
   flex-direction: column;
   gap: 55px;
-  flex: 1; /* 왼쪽 영역 */
+  flex: 1;
+  /* 왼쪽 영역 */
 }
 
 /* 오른쪽 버튼 컨테이너 */
 .features-buttons {
-  width: 360px; /* 오른쪽 버튼 영역 고정 너비 */
+  width: 360px;
+  /* 오른쪽 버튼 영역 고정 너비 */
   display: flex;
   flex-direction: column;
   gap: 20px;

@@ -25,10 +25,7 @@ export default [
       { path: 'board/:boardNo', name: 'adminBoardDetail', component: AdminBoardDetail },
       { path: 'report', name: 'adminReportList', component: AdminReportList },
       { path: 'report/:reportNo', name: 'adminReportDetail', component: AdminReportDetail },
+      { path: "/log", name: "logs", component: Log }
     ]
   },
-  // ================================
-  // Logs
-  // ================================
-  { path: "/log", name: "logs", component: Log }
 ]

@@ -72,7 +72,7 @@ const goToSignup = () => router.push({ name: 'join' });
 const goToUserPet = () => router.push({ name: 'userPetList' });
 // const goToBoardCategoryList = () => router.push('/boardCategoryList');
 const goToMyInfo = () => router.push({ name: 'myInfo' });
-const goToUpdateProfile = () => router.push('/user/update');
+const goToUpdateProfile = () => router.push({ name: 'myInfo' });
 const goToAdminDashboard = () => router.push({ name: 'adminDashboard' });
 const goToPetAbandonmentList = () => router.push({ name: 'abandonmentList' });
 const goToProduct = () => router.push({ name: 'ProductList' });

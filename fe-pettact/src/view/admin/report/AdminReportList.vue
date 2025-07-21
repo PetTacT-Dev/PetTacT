@@ -43,10 +43,10 @@
               </option>
             </select>
           </div>
-
           <div class="col-md-4 d-grid mt-4">
             <button type="button" class="btn btn-primary" @click="onSearch">검색</button>
           </div>
+
         </form>
       </div>
     </div>
