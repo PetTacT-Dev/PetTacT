@@ -134,24 +134,13 @@ onMounted(() => {
   axios.get("/v1/pet/sido").then((res) => {
     sidoList.value = res.data.items;
   });
-  const kakaoScript = document.createElement("script");
-  kakaoScript.src =
-    "//dapi.kakao.com/v2/maps/sdk.js?appkey=becfe069cca65d679dc79f6ef0a6cee7&libraries=services";
-  kakaoScript.async = true;
-  document.head.appendChild(kakaoScript);
-
-  const postcodeScript = document.createElement("script");
-  postcodeScript.src =
-    "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
-  postcodeScript.async = true;
-  document.head.appendChild(postcodeScript);
 });
 
+// 시도 선택 시 시군구 조회
 const handleSidoChange = () => {
   selectedSigungu.value = "";
   sigunguList.value = [];
   form.value.orgNm = "";
-
   if (selectedSido.value) {
     axios
       .get("/v1/pet/sigungu", {
@@ -163,6 +152,7 @@ const handleSidoChange = () => {
   }
 };
 
+// 시군구 선택 시 orgNm 설정
 const handleSigunguChange = () => {
   if (selectedSido.value && selectedSigungu.value) {
     form.value.orgNm =
@@ -185,8 +175,10 @@ const openDaumPostcode = () => {
     },
   }).open();
 };
-
+// 등록
 const submitForm = () => {
+  console.log("제출 데이터:", form.value); // 이 줄 추가
+
   axios
     .post("/v1/api/shelter", form.value)
     .then(() => {
@@ -198,6 +190,7 @@ const submitForm = () => {
       alert("등록 실패");
     });
 };
+
 </script>
 
 <style scoped>
