@@ -30,6 +30,7 @@ public class OrderDTO extends BaseEntity{
     @Data
     @NoArgsConstructor
     public static class CreateRequest {
+    	private String orderId;         // ✅ 추가
         private String deliveryName;   // 배송지명 (예: 우리집, 회사 등)
         private String receiver;       // 수령인 이름
         private String zipcode;        // 우편번호

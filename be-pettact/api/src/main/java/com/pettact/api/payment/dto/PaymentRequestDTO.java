@@ -11,7 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentRequestDTO {
- private String orderId;  // 주문번호 (OrderEntity.orderNo)
+	
+ private String orderId;
+ private Long orderNo;  // 주문번호 (OrderEntity.orderNo)
  private Long amount;     // 결제 금액 (OrderEntity.totalPrice)
  private String method;   // 결제 수단 (예: CARD, VBANK 등)
 }

@@ -80,7 +80,7 @@ public class ReportService {
 
     // admin
     public PageResponseDto<AdminReportListDTO> getAdminListReport(
-    	    Report.ReportTargetLocation reportTargetLocation, Integer reportStatus, String reportReason,
+    	    Report.ReportTargetLocation reportTargetLocation, Integer reportStatus, Report.ReportReason reportReason,
     	    LocalDate startDate, LocalDate endDate, int page, int size
 	) {
 	    Pageable pageable = PageRequest.of(page - 1, size);

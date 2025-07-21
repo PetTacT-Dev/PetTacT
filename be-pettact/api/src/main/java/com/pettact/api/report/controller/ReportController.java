@@ -2,8 +2,10 @@ package com.pettact.api.report.controller;
 
 import com.pettact.api.report.dto.ReportCreateDto;
 import com.pettact.api.report.dto.ReportResponseDto;
+import com.pettact.api.report.entity.Report;
 import com.pettact.api.report.service.ReportService;
 import com.pettact.api.security.vo.CustomUserDetails;
+
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,7 +13,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v1/report")
@@ -72,7 +77,41 @@ public class ReportController {
         List<ReportResponseDto> responseDto = reportService.getListReport(userNo);
         return ResponseEntity.ok(responseDto);
     }
+    
+    @GetMapping("/reasons")
+    public ResponseEntity<List<Map<String, String>>> getReportReasons() {
+        List<Map<String, String>> result = Arrays.stream(Report.ReportReason.values())
+            .map(r -> Map.of(
+                "code", r.name(),
+                "description", r.getDescription()
+            ))
+            .collect(Collectors.toList());
 
+        return ResponseEntity.ok(result);
+    }
+    
+    @GetMapping("/locations")
+    public List<Map<String, String>> getReportTargetLocations() {
+        return Arrays.stream(Report.ReportTargetLocation.values())
+                .map(loc -> Map.of(
+                        "code", loc.name(),
+                        "label", getKoreanLabel(loc)
+                ))
+                .collect(Collectors.toList());
+    }
+    
+    private String getKoreanLabel(Report.ReportTargetLocation location) {
+        return switch (location) {
+            case BOARD -> "게시글";
+            case REPLY -> "댓글";
+            case PRODUCT -> "상품";
+            case CART -> "장바구니";
+            case ORDER -> "주문";
+            case PET -> "동물";
+            case USER -> "회원";
+        };
+    }
+    
     /**
      * admin
      * -> 추후 도메인 변경 고려 plz,,

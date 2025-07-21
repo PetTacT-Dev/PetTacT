@@ -1,4 +1,4 @@
-package com.pettact.api.pet.scheduler;
+package com.pettact.api.common.scheduler;
 
 import com.pettact.api.pet.service.PetDataMergeService;
 import com.pettact.api.pet.service.PetTmpDataService;

@@ -5,7 +5,7 @@ import com.pettact.api.file.FileUtils;
 import com.pettact.api.file.dto.FileDto;
 import com.pettact.api.file.dto.UpdateFileDto;
 import com.pettact.api.file.entity.File;
-import com.pettact.api.file.repository.MultiFileRepository;;
+import com.pettact.api.file.repository.MultiFileRepository;
 import com.pettact.api.multiFile.dto.FileUpdateDto;
 import com.pettact.api.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;

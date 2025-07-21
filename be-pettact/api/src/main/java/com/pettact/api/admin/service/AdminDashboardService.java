@@ -28,10 +28,13 @@ import com.pettact.api.admin.dto.dashboard.board.BoardDailyStatsDTO;
 import com.pettact.api.admin.dto.dashboard.board.BoardStatsDTO;
 import com.pettact.api.admin.dto.dashboard.report.ReportDailyStatsDTO;
 import com.pettact.api.admin.dto.dashboard.user.DailyUserStatsDTO;
+import com.pettact.api.admin.dto.dashboard.user.SellerPendingDTO;
 import com.pettact.api.admin.dto.dashboard.user.UserRegStatsDTO;
 import com.pettact.api.board.entity.Board;
 import com.pettact.api.board.repository.BoardRepository;
 import com.pettact.api.report.Repository.ReportRepository;
+import com.pettact.api.report.dto.ReportResponseDto;
+import com.pettact.api.report.entity.Report;
 import com.pettact.api.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -43,6 +46,7 @@ public class AdminDashboardService {
 	private final BoardRepository boardRepository;
 	private final ReportRepository reportRepository;
 	
+    // --------------- USER ---------------
 	// 전체 사용자 통계
 	public DashboardStatsDTO getDashboardStats() {
 		// 날짜 계산용
@@ -82,8 +86,13 @@ public class AdminDashboardService {
         for (int i = days - 1; i >= 0; i--) {
             LocalDate date = LocalDate.now().minusDays(i);
             LocalDateTime start = date.atStartOfDay();
-            LocalDateTime end = date.atTime(LocalTime.MAX);
+            LocalDateTime end;
 
+            if (date.isEqual(LocalDate.now())) {
+            	end = LocalDateTime.now();
+            } else {
+            	end = date.atTime(LocalTime.MAX);
+            }
             long newUsers = userRepository.countUsersBetween(start, end);
             runningTotal += newUsers;
 
@@ -92,7 +101,8 @@ public class AdminDashboardService {
 
         return statsList;
     }
-    
+
+    // --------------- BOARD ---------------
     // 게시물 통계
     public BoardStatsDTO getBoardStats() {
         long total = boardRepository.countTotalBoards();
@@ -124,8 +134,13 @@ public class AdminDashboardService {
         for (int i = days - 1; i >= 0; i--) {
             LocalDate date = LocalDate.now().minusDays(i);
             LocalDateTime startDate = date.atStartOfDay();
-            LocalDateTime endDate = date.atTime(23, 59, 59);
+            LocalDateTime endDate;
 
+            if (date.isEqual(LocalDate.now())) {
+                endDate = LocalDateTime.now();
+            } else {
+                endDate = date.atTime(LocalTime.MAX);
+            }
             Long count = boardRepository.countBoardsBetween(startDate, endDate);
 
             statsList.add(BoardDailyStatsDTO.of(date, count));
@@ -134,28 +149,6 @@ public class AdminDashboardService {
         return statsList;
     }
     
-    // 일별 신고 통계
-    public List<ReportDailyStatsDTO> getDailyReportStats(int days) {
-        List<ReportDailyStatsDTO> statsList = new ArrayList<>();
-
-        for (int i = days - 1; i >= 0; i--) {
-            LocalDate date = LocalDate.now().minusDays(i);
-            LocalDateTime startDate = date.atStartOfDay();
-            LocalDateTime endDate = date.atTime(23, 59, 59);
-
-            Long count = reportRepository.countReportsBetween(startDate, endDate);
-
-            statsList.add(ReportDailyStatsDTO.of(date, count));
-        }
-
-        return statsList;
-    }
-    
-    // 판매자 승인 대기 수 
-    public Long getPendingSellerCount() {
-        return userRepository.countPendingSellers();
-    }
-
     // 최근 삭제된 게시물 통계
     public List<AdminBoardListDTO> getRecentDeletedBoards(Boolean todayOnly, int limit) {
         Pageable pageable = PageRequest.of(0, limit);
@@ -171,6 +164,60 @@ public class AdminDashboardService {
             .map(AdminBoardListDTO::from)
             .collect(Collectors.toList());
     }
+    
+    // --------------- REPORT ---------------
+    // 일별 신고 통계
+    public List<ReportDailyStatsDTO> getDailyReportStats(int days) {
+        List<ReportDailyStatsDTO> statsList = new ArrayList<>();
 
+        for (int i = days - 1; i >= 0; i--) {
+            LocalDate date = LocalDate.now().minusDays(i);
+            LocalDateTime startDate = date.atStartOfDay();
+            LocalDateTime endDate;
 
+            if (date.isEqual(LocalDate.now())) {
+                endDate = LocalDateTime.now();
+            } else {
+                endDate = date.atTime(LocalTime.MAX);
+            }
+            
+            Long count = reportRepository.countReportsBetween(startDate, endDate);
+
+            statsList.add(ReportDailyStatsDTO.of(date, count));
+        }
+
+        return statsList;
+    }
+    
+    // 미처리 신고 개수 조회
+    public Long getPendingReportCount() {
+        return reportRepository.countByStatus(0); // 0: 미처리
+    }
+
+    // 최신 신고 리스트 조회
+    public List<ReportResponseDto> getLatestReports(int limit) {
+        List<Report> reports = reportRepository.findLatestReports(limit);
+        return reports.stream()
+            .map(ReportResponseDto::fromEntity)
+            .collect(Collectors.toList());
+    }
+    
+    // --------------- SELLER ---------------
+    // 판매자 승인 대기 수 
+    public Long getPendingSellerCount() {
+        return userRepository.countPendingSellers();
+    }
+    
+    // 판매자 승인 대기 리스트 - 요약
+    public List<SellerPendingDTO> getPendingSellers(int limit) {
+        return userRepository.findTopPendingSellers(limit).stream()
+            .map(u -> new SellerPendingDTO(
+                u.getUserNo(),
+                u.getUserEmail(),
+                u.getUserName(),
+                u.getUserNickname(),
+                u.getCreatedAt()
+            ))
+            .collect(Collectors.toList());
+    }
 }

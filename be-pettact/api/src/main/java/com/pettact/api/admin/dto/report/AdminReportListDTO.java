@@ -20,6 +20,7 @@ public class AdminReportListDTO {
     private String userEmail;
     private String userNickname;
     private String reportReason;
+    private String reportDescription;
     private Integer reportStatus;
     private LocalDateTime createdAt;
 
@@ -31,7 +32,8 @@ public class AdminReportListDTO {
                 .userNo(report.getUsers().getUserNo())
                 .userEmail(report.getUsers().getUserEmail())
                 .userNickname(report.getUsers().getUserNickname())
-                .reportReason(report.getReportReason())
+                .reportReason(report.getReportReason().getDescription())
+                .reportDescription(report.getReportDescription())
                 .reportStatus(report.getReportStatus())
                 .createdAt(report.getCreatedAt())
                 .build();

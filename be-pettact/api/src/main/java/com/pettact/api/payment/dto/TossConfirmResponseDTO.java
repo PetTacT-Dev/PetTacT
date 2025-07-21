@@ -10,7 +10,8 @@ import lombok.Data;
 public class TossConfirmResponseDTO { // 받아야 할 데이터
 	
 	 	private String paymentKey;
-	    private String orderId;
+	 	private String orderId;
+	    private Long orderNo;
 	    
 	    @JsonProperty("totalAmount")
 	    private Long amount;

@@ -246,22 +246,17 @@ public class AdminController {
 	
 	// TODO: 게시물 삭제 처리
 	
-	// TODO: 권한 체크 관련 로직 -> 기존 스타일에 맞게 변경 plz
 	// 신고 목록 조회
 	@GetMapping("/report")
 	public ResponseEntity<PageResponseDto<AdminReportListDTO>> getListReport(
 			@RequestParam(value = "location", required = false) Report.ReportTargetLocation location,
 			@RequestParam(value = "status", required = false) Integer status,
-			@RequestParam(value = "reason", required = false) String reason,
+			@RequestParam(value = "reason", required = false) Report.ReportReason reason,
 			@RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
 			@RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
 	        @RequestParam(value = "page", defaultValue = "1") int page,
 	        @RequestParam(value = "size", defaultValue = "10") int size
     ) {
-		if(reason != null && reason.trim().length() < 2) {
-			throw new IllegalArgumentException("검색어는 2글자 이상 입력해주세요");
-		}
-
 		PageResponseDto<AdminReportListDTO> responseDto 
 				= reportService.getAdminListReport(location, status, reason, startDate, endDate, page, size);
 		return ResponseEntity.ok(responseDto);

@@ -74,5 +74,5 @@ public class PetAbandonmentDto {
 	private String evntEDate;
 	private String evntConditionLimitTxt;
 	private String evntTxt;
-	private int petViewCnt;
+	private Integer petViewCnt;
 }

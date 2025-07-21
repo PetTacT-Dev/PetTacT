@@ -44,13 +44,9 @@ public class TokenCheckFilter extends OncePerRequestFilter {
         "/v1/api/abandonment/**",
         "/v1/pet/abandonment/**",
         "/v1/notification/subscribe",
-<<<<<<< HEAD
-        "/product/list",
-            "/v1/multifile/image/**",
-=======
+        "/v1/multifile/image/**",
         "/v1/product",
         "/v1/product/popular",
->>>>>>> 2c950ca93cb248f77984a048a2a45eca992f0e53
         "/v1/payments/confirm",
         "/ws-stomp", // sockjs 경로도 리스트에 포함
         
