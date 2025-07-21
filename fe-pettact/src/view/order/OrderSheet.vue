@@ -97,8 +97,8 @@ const isLoggedIn = computed(() => !!userStore.user)
 
 //===================샘플데이터================
 
-const deliveryName = ref('조용민');
-const receiver = ref('집');
+const deliveryName = ref('우리집');
+const receiver = ref('');
 const zipcode = ref('');
 const address1 = ref('');
 const address2 = ref('');
