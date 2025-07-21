@@ -66,15 +66,15 @@
         <div class="social-login-section">
           <div class="social-buttons">
             <button class="social-button" @click="loginWithGoogle">
-              <div class="social-icon">🌐</div>
+              <div class="social-icon"><img src="@/assets/social-login/social_google.png" alt="Google" /></div>
               Google 로그인
             </button>
             <button class="social-button" @click="loginWithNaver">
-              <div class="social-icon">🟢</div>
+              <div class="social-icon"><img src="@/assets/social-login/social_naver.png" alt="Naver" /></div>
               Naver 로그인
             </button>
             <button class="social-button" @click="loginWithKakao">
-              <div class="social-icon">🟡</div>
+              <div class="social-icon"><img src="@/assets/social-login/social_kakao.png" alt="Kakao" /></div>
               Kakao 로그인
             </button>
           </div>
