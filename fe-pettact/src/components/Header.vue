@@ -1,6 +1,8 @@
 <template>
   <div class="navbar">
-    <div class="logo" @click="goHome">PETTACT</div>
+  <div class="logo" @click="goHome">
+    <img src="/image/logo.png" alt="logo" class="logo-img" />
+  </div>
     <div class="menu">
       <div class="menu-item" @click="goToPetAbandonmentList">구조동물 </div>
       <div class="menu-item" @click="goToPetShelterList">보호소</div>
@@ -145,7 +147,11 @@ const logout = () => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Paytone+One&display=swap');
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css');
-
+.logo-img {
+  width: 200px;
+  object-fit: contain;
+  cursor: pointer;
+}
 .navbar {
   width: 100%;
   /* height: 149px; */
