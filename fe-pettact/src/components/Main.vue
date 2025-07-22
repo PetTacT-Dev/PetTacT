@@ -156,7 +156,7 @@ export default {
         },
         {
           id: 2,
-          image: '/image/steve-johnson-7MTN0xE47EM-unsplash.jpg',
+          image: '/image/niklas-liniger-eyGyeByOjig-unsplash.jpg',
           alt: '반려동물 찾기',
           title: 'Find Your Perfect Pet Companion',
           subtitle: '나에게 맞는 반려동물을 찾아보세요',
@@ -165,7 +165,7 @@ export default {
         },
         {
           id: 3,
-          image: '/image/pawel-czerwinski-zGLVBSD7SYo-unsplash.jpg',
+          image: '/image/rachel-kelli-0-X_N654aw4-unsplash.jpg',
           alt: '펫 케어 커뮤니티',
           title: 'Pet Care Tips & Community',
           subtitle: '반려동물 케어 팁과 커뮤니티',
