@@ -20,9 +20,7 @@
             @click="openRoom(room.roomNo)"
             :class="['chat-room-item', { active: modalStore.roomNo === room.roomNo }]"
           >
-            <div class="room-avatar">
-              <!-- <img src="/api/placeholder/50/50" :alt="room.name" /> -->
-            </div>
+            <div class="room-avatar"></div>
             <div class="room-info">
               <div class="room-name">{{ room.name }}</div>
               <div class="room-last-message">{{ room.lastMessage || '채팅을 시작해보세요' }}</div>
@@ -45,10 +43,7 @@
 
     <!-- 오른쪽: 채팅창 영역 -->
     <div class="chat-main">
-      <!-- 항상 ChatRoom 표시하되, roomNo가 있을 때만 실제 기능 -->
-      <ChatRoom v-if="modalStore.roomNo" :roomNo="modalStore.roomNo" />
-      
-      <!-- roomNo가 없을 때 환영 메시지 -->
+      <ChatRoom :key="modalStore.roomNo" v-if="modalStore.roomNo" :roomNo="modalStore.roomNo" />
       <div v-else class="welcome-screen">
         <div class="welcome-content">
           <h3>대화를 시작해보세요! 👋</h3>
@@ -78,59 +73,7 @@ const chatRooms = ref([]);
 const showSearch = ref(false);
 const emit = defineEmits(['close']);
 
-// function formatTime(timestamp) {
-//   if (!timestamp) return '';
-  
-//   const now = new Date();
-//   const date = new Date(timestamp);
-//   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-//   const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  
-//   if (messageDate.getTime() === today.getTime()) {
-//     // 오늘이면 시간만
-//     const hours = date.getHours();
-//     const minutes = date.getMinutes();
-//     const period = hours >= 12 ? '오후' : '오전';
-//     const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
-//     return `${period} ${displayHours}:${minutes.toString().padStart(2, '0')}`;
-//   } else {
-//     // 오늘이 아니면 날짜
-//     return `${date.getMonth() + 1}월 ${date.getDate()}일`;
-//   }
-// }
-
 onMounted(() => {
-  // 테스트 채팅방 데이터 추가
-  chatRooms.value = [
-    {
-      roomNo: 1,
-      name: "전설의고수",
-      lastMessage: "그래, 이따 8시에 봐!",
-      lastTime: "2024-10-20T14:05:00",
-      unreadCount: 2
-    },
-    {
-      roomNo: 2,
-      name: "초보자",
-      lastMessage: "지금 시작할 수 있나요?",
-      lastTime: "2024-10-19T10:30:00",
-      unreadCount: 0
-    },
-    {
-      roomNo: 3,
-      name: "게임왕",
-      lastMessage: "오늘 저녁에 게임 가능?",
-      lastTime: "2024-10-18T15:20:00",
-      unreadCount: 1
-    }
-  ];
-
-  console.log("테스트 채팅방 데이터 추가:", chatRooms.value);
-  console.log("chatRooms.length:", chatRooms.value.length);
-  console.log("첫 번째 채팅방:", chatRooms.value[0]);
-  console.log("modalStore.roomNo:", modalStore.roomNo);
-
-  // 실제 데이터도 가져오기 (API 호출)
   fetchChatRooms();
 });
 
@@ -145,42 +88,38 @@ function fetchChatRooms() {
 }
 
 function openRoom(roomNo) {
-  modalStore.roomNo = roomNo;
+  setTimeout(() => {
+    modalStore.roomNo = roomNo;
+  }, 0);
   showSearch.value = false;
 }
 
 function closeModal() {
   if (modalStore.roomNo) {
-    // 채팅방 나가기 (room 리셋)
     modalStore.resetChat();
     modalStore.roomNo = null;
   } else {
-    // 모달 닫기
     modalStore.closeMessageModal();
     emit('close');
   }
-  // 채팅방 목록 새로고침
   fetchChatRooms();
 }
 
 function formatTime(timestamp) {
   if (!timestamp) return '';
-  
+
   const now = new Date();
   const date = new Date(timestamp);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  
+
   if (messageDate.getTime() === today.getTime()) {
-    // 오늘이면 시간만
     return `오후 ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
   } else {
-    // 오늘이 아니면 날짜
     return `${date.getMonth() + 1}월 ${date.getDate()}일`;
   }
 }
 </script>
-
 <style scoped>
 /* 전체 채팅 앱 컨테이너 */
 .chat-app-container {

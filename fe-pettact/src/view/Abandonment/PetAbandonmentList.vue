@@ -3,7 +3,7 @@
     <section class="search-results-section" ref="resultsSection">
       <div class="search-filters-container">
         <br>
-        <h2 class="search-title">유기동물 목록</h2><br>
+        <h2 class="search-title">구조동물 목록</h2><br>
         <div class="filters search-container-centered">
           <select v-model="selectedUpKindCd" @change="fetchKinds" class="filter-select">
             <option value="">축종 선택</option>
@@ -79,8 +79,8 @@
     <section class="adoption-section" v-if="!searched && defaultPets.length > 0">
       <div class="adoption-container">
         <div class="adoption-header">
-          <h2 class="adoption-title">입양 마감 임박 동물들</h2>
-          <p class="adoption-subtitle">입양 마감일이 가까운 아이들을 소개해요.</p>
+          <h2 class="adoption-title">공고 마감 임박 동물들</h2>
+          <p class="adoption-subtitle">공고 마감일이 가까운 아이들을 소개해요.</p>
         </div>
         <div class="adoption-content">
           <div v-for="a in defaultPets" :key="a.desertionNo" class="pet-card">

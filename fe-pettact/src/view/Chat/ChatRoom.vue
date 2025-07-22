@@ -6,7 +6,7 @@
         <div class="partner-avatar"> 
         </div>
         <div class="partner-details">
-          <h4 class="partner-name">채팅 상대방</h4>
+          <h4 class="partner-name"></h4>
           <span class="member-count">2</span>
         </div>
       </div>
@@ -36,7 +36,7 @@
             <span class="sender-name">{{ msg.senderNickname }}</span>
             <div class="message-row">
               <div class="bubble other-bubble">{{ msg.message }}</div>
-              <div class="message-time">{{ formatMessageTime(msg.createdAt) }}</div>
+              <div class="message-time">{{ msg.createdAt }}</div>
             </div>
           </div>
         </div>
@@ -45,7 +45,7 @@
         <div v-else class="message-group my-message">
           <div class="message-content">
             <div class="message-row">
-              <div class="message-time">{{ formatMessageTime(msg.createdAt) }}</div>
+              <div class="message-time">{{msg.createdAt}}</div>
               <div class="bubble my-bubble">{{ msg.message }}</div>
             </div>
           </div>
@@ -112,7 +112,6 @@ async function fetchMessages(roomNo) {
       ...msg,
       isMine: msg.senderUserNo === userNo
     }));
-
     const lastId = modalStore.messages.at(-1)?.messageId;
     if (lastId) {
       await axios.post('/v1/chat/read', {
@@ -201,8 +200,6 @@ function sendMessage() {
 
 // 메시지 시간 포맷
 function formatMessageTime(timestamp) {
-  if (!timestamp) return '방금 전';
-  
   const date = new Date(timestamp);
   const hours = date.getHours();
   const minutes = date.getMinutes();
