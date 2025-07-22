@@ -47,6 +47,10 @@
           <p class="field-value light">{{ detail.happenPlace }}</p>
         </div>
         <div class="field-group">
+          <label class="field-label">품종</label>
+          <p class="field-value light">{{ detail.kindNm }}</p>
+        </div>
+        <div class="field-group">
           <label class="field-label">나이</label>
           <p class="field-value light">{{ detail.age }}</p>
         </div>
