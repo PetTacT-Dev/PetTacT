@@ -9,7 +9,7 @@
     <div v-else-if="boards.length === 0">표시할 게시글이 없습니다.</div>
     <ul v-else class="board-list">
       <li v-for="board in boards" :key="board.boardNo" class="board-item"
-        @click="goToBoard(board.responseDto.boardCategoryNo, board.boardNo)">
+        @click="goToBoard(board.boardNo)">
         <div class="board-content">
           <span class="board-category">{{ board.responseDto.boardCategoryTitle }}</span>
           <span class="board-title">{{ board.boardTitle }}</span>
@@ -46,8 +46,8 @@ const fetchPopularBoards = async () => {
   }
 }
 
-const goToBoard = (categoryId, boardNo) => {
-  router.push(`/board/${categoryId}/${boardNo}`)
+const goToBoard = (boardNo) => {
+  router.push({ name: 'BoardDetail', params: { boardNo: boardNo } })
 }
 
 const formatViewCount = (views) => {
