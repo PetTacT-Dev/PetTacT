@@ -2,8 +2,10 @@
   <div class="navbar">
     <div class="logo" @click="goHome">PETTACT</div>
     <div class="menu">
-      <div class="menu-item" @click="goToPetAbandonmentList">유기동물 조회</div>
-      <div class="menu-item" @click="goToUserPet">반려동물</div>
+      <div class="menu-item" @click="goToPetAbandonmentList">구조동물 </div>
+      <div class="menu-item" @click="goToPetShelterList">보호소</div>
+      <div class="menu-item" @click="goToPetFacilityList">Pet Zone</div>
+      <div class="menu-item" @click="goToUserPet">내 반려동물</div>
       <div class="menu-item" @click="goToProduct">쇼핑몰</div>
       <div class="menu-item" @click="goToBoardCategoryList">커뮤니티</div>
     </div>
@@ -75,6 +77,8 @@ const goToMyInfo = () => router.push({ name: 'myInfo' });
 const goToUpdateProfile = () => router.push({ name: 'myInfo' });
 const goToAdminDashboard = () => router.push({ name: 'adminDashboard' });
 const goToPetAbandonmentList = () => router.push({ name: 'abandonmentList' });
+const goToPetShelterList = () => router.push({ name: 'shelterList' });
+const goToPetFacilityList = () => router.push({ name: 'facilityList' });
 const goToProduct = () => router.push({ name: 'ProductList' });
 
 // 채팅 모달 열기
