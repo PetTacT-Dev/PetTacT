@@ -1,19 +1,11 @@
 <template>
   <div class="animal-search-page">
-    <!-- 히어로 섹션 -->
-   
-
-    <!-- 검색 필터 + 결과 -->
     <section class="search-results-section" ref="resultsSection">
       <div class="search-filters-container">
-        <h2 class="search-title">유기동물 검색</h2>
-
-        <div class="filters">
-          <select
-            v-model="selectedUpKindCd"
-            @change="fetchKinds"
-            class="filter-select"
-          >
+        <br>
+        <h2 class="search-title">유기동물 목록</h2><br>
+        <div class="filters search-container-centered">
+          <select v-model="selectedUpKindCd" @change="fetchKinds" class="filter-select">
             <option value="">축종 선택</option>
             <option value="417000">개</option>
             <option value="422400">고양이</option>
@@ -27,26 +19,17 @@
             </option>
           </select>
 
-          <select
-            v-model="selectedSido"
-            @change="handleSidoChange"
-            class="filter-select"
-          >
+          <select v-model="selectedSido" @change="handleSidoChange" class="filter-select">
             <option value="">시도 선택</option>
             <option v-for="s in sidoList" :key="s.orgCd" :value="s">
               {{ s.orgdownNm }}
             </option>
           </select>
 
-          <select
-            v-model="selectedSigungu"
-            @change="handleSigunguChange"
-            class="filter-select"
-          >
+          <select v-model="selectedSigungu" @change="handleSigunguChange" class="filter-select">
             <option value="">시군구 선택</option>
             <option v-for="g in sigunguList" :key="g.orgCd" :value="g">
-              {{ g.orgdownNm }}
-            </option>
+              {{ g.orgdownNm }}</option>
           </select>
 
           <button @click="goPage(1)" class="search-filter-btn">조회</button>
@@ -63,98 +46,59 @@
             </div>
 
             <div class="adoption-content">
-              <div
-                v-for="(row, rowIndex) in chunkedAbandonments"
-                :key="rowIndex"
-                class="adoption-row"
-              >
-                <div v-for="a in row" :key="a.desertionNo" class="pet-card">
-                  <div class="pet-image">
-                    <img
-                      :src="a.popfile1 || '/image/no-image.png'"
-                      alt="사진"
-                    />
+              <div v-for="a in abandonments" :key="a.desertionNo" class="pet-card">
+                <div class="pet-image">
+                  <img :src="a.popfile1 || '/image/no-image.png'" alt="사진" />
+                </div>
+                <div class="pet-info">
+                  <div class="pet-tags">
+                    <span class="tag tag-dark">{{ a.sexCd }} / {{ a.age }}</span>
+                    <span class="tag tag-light">{{ a.kindCd }}</span>
                   </div>
-                  <div class="pet-info">
-                    <div class="pet-tags">
-                      <span class="tag tag-dark"
-                        >{{ a.sexCd }} / {{ a.age }}</span
-                      >
-                      <span class="tag tag-light">{{ a.kindCd }}</span>
+                  <div class="pet-details">
+                    <div class="pet-details-content">
+                      <div class="pet-name">No. {{ a.desertionNo }}</div>
+                      <div class="pet-location">{{ a.happenPlace }}</div>
+                      <div class="pet-description">{{ a.noticeSdt }} ~ {{ a.noticeEdt }}</div>
                     </div>
-                    <div class="pet-details">
-                      <div class="pet-details-content">
-                        <div class="pet-name">No. {{ a.desertionNo }}</div>
-                        <div class="pet-location">{{ a.happenPlace }}</div>
-                        <div class="pet-description">
-                          {{ a.noticeSdt }} ~ {{ a.noticeEdt }}
-                        </div>
-                      </div>
-                      <button
-                        @click="DetailView(a.desertionNo)"
-                        class="pet-button"
-                      >
-                        상세보기
-                      </button>
-                    </div>
+                    <button @click="DetailView(a.desertionNo)" class="pet-button">상세보기</button>
                   </div>
                 </div>
               </div>
             </div>
 
-            <Pagination
-              :current-page="page"
-              :total-pages="totalPages"
-              @change="goPage"
-            />
+            <Pagination :current-page="page" :total-pages="totalPages" @change="goPage" />
           </div>
         </div>
 
-        <p v-else-if="searched" class="no-results">
-          조건에 맞는 유기동물이 없습니다.
-        </p>
+        <p v-else-if="searched" class="no-results">조건에 맞는 유기동물이 없습니다.</p>
       </div>
     </section>
 
-    <!-- 마감 임박 리스트 (기본 표시) -->
-    <section
-      class="adoption-section"
-      v-if="!searched && defaultPets.length > 0"
-    >
+    <!-- 마감 임박 리스트 -->
+    <section class="adoption-section" v-if="!searched && defaultPets.length > 0">
       <div class="adoption-container">
         <div class="adoption-header">
           <h2 class="adoption-title">입양 마감 임박 동물들</h2>
-          <p class="adoption-subtitle">
-            입양 마감일이 가까운 아이들을 소개해요.
-          </p>
+          <p class="adoption-subtitle">입양 마감일이 가까운 아이들을 소개해요.</p>
         </div>
         <div class="adoption-content">
-          <div
-            v-for="(row, rowIndex) in chunkedDefaultPets"
-            :key="rowIndex"
-            class="adoption-row"
-          >
-            <div v-for="a in row" :key="a.desertionNo" class="pet-card">
-              <div class="pet-image">
-                <img :src="a.popfile1 || '/image/no-image.png'" alt="사진" />
+          <div v-for="a in defaultPets" :key="a.desertionNo" class="pet-card">
+            <div class="pet-image">
+              <img :src="a.popfile1 || '/image/no-image.png'" alt="사진" />
+            </div>
+            <div class="pet-info">
+              <div class="pet-tags">
+                <span class="tag tag-dark">{{ a.sexCd }} / {{ a.age }}</span>
+                <span class="tag tag-light">{{ a.kindCd }}</span>
               </div>
-              <div class="pet-info">
-                <div class="pet-tags">
-                  <span class="tag tag-dark">{{ a.sexCd }} / {{ a.age }}</span>
-                  <span class="tag tag-light">{{ a.kindCd }}</span>
+              <div class="pet-details">
+                <div class="pet-details-content">
+                  <div class="pet-name">No. {{ a.desertionNo }}</div>
+                  <div class="pet-location">{{ a.happenPlace }}</div>
+                  <div class="pet-description">{{ a.noticeSdt }} ~ {{ a.noticeEdt }}</div>
                 </div>
-                <div class="pet-details">
-                  <div class="pet-details-content">
-                    <div class="pet-name">No. {{ a.desertionNo }}</div>
-                    <div class="pet-location">{{ a.happenPlace }}</div>
-                    <div class="pet-description">
-                      {{ a.noticeSdt }} ~ {{ a.noticeEdt }}
-                    </div>
-                  </div>
-                  <button @click="DetailView(a.desertionNo)" class="pet-button">
-                    상세보기
-                  </button>
-                </div>
+                <button @click="DetailView(a.desertionNo)" class="pet-button">상세보기</button>
               </div>
             </div>
           </div>
@@ -502,6 +446,7 @@ body {
   font-weight: 600;
   color: #333;
   margin-bottom: 16px;
+  text-align:center;
 }
 
 .search-btn:hover {
@@ -1072,4 +1017,13 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.search-container-centered {
+  justify-content: center;
+  flex-wrap: wrap;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
 </style>
