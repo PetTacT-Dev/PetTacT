@@ -1,43 +1,7 @@
 <template>
   <div class="animal-search-page">
     <!-- 히어로 섹션 -->
-    <section class="hero-section">
-      <div class="hero-content">
-        <div class="hero-text">
-          <h1 class="hero-title">따뜻한 보금자리를 찾아요</h1>
-          <p class="hero-subtitle">
-            새로운 가족을 기다리는 우리 아이들의 정보를 확인해보세요.
-          </p>
-          <div class="hero-buttons">
-            <button class="btn btn-outline">입양 정보</button>
-            <button class="btn btn-primary" @click="scrollToResults">
-              바로 검색
-            </button>
-          </div>
-        </div>
-
-        <!-- 검색어 입력창 -->
-        <div class="search-container">
-          <span class="search-icon">🔍</span>
-          <input
-            type="text"
-            placeholder="검색어를 입력하세요"
-            class="search-input"
-            v-model="searchKeyword"
-          />
-          <button @click="searchAnimals" class="search-btn">조회</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- 카테고리 섹션 -->
-    <section class="category-section">
-      <div class="category-grid">
-        <div v-for="region in regions" :key="region" class="category-item">
-          <div class="region-name">{{ region }}</div>
-        </div>
-      </div>
-    </section>
+   
 
     <!-- 검색 필터 + 결과 -->
     <section class="search-results-section" ref="resultsSection">
@@ -149,38 +113,6 @@
         <p v-else-if="searched" class="no-results">
           조건에 맞는 유기동물이 없습니다.
         </p>
-      </div>
-    </section>
-
-    <!-- FAQ -->
-    <section class="faq-section">
-      <div class="faq-container">
-        <div class="faq-header">
-          <h2 class="faq-title">사용자가 자주하는 질문</h2>
-          <p class="faq-subtitle">
-            사용자들이 가장 궁금해하는 질문 세 가지를 미리 소개해드립니다.
-          </p>
-          <button class="faq-view-all">모든 FAQ 보기</button>
-        </div>
-
-        <div class="faq-list">
-          <div
-            v-for="(faq, index) in faqs"
-            :key="index"
-            class="faq-item"
-            :class="{ open: openIndex === index }"
-            @click="toggleFAQ(index)"
-          >
-            <div class="faq-question-row">
-              <div class="faq-question">{{ faq.question }}</div>
-              <div class="faq-icon">{{ openIndex === index ? "×" : "+" }}</div>
-            </div>
-            <div class="faq-answer" v-if="openIndex === index">
-              {{ faq.answer }}
-            </div>
-            <button class="faq-button">입양 보호소 전화하기</button>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -314,7 +246,8 @@ export default {
       }
     },
     toggleFAQ(index) {
-      this.openIndex = this.openIndex === index ? null : index;
+      this.openIndex = this.openIndex
+       === index ? null : index;
     },
     fetchEndingSoonPets(page = 1) {
       axios
@@ -390,7 +323,7 @@ export default {
       }
       const params = {
         page,
-        size: 10,
+        size: 9,
         upKindCd: this.selectedUpKindCd,
         kindCd: this.selectedKindCd,
       };
