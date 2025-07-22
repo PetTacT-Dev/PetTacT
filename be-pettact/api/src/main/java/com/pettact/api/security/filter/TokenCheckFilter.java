@@ -45,11 +45,13 @@ public class TokenCheckFilter extends OncePerRequestFilter {
         "/v1/pet/abandonment/**",
         "/v1/notification/subscribe",
         "/v1/multifile/image/**",
-        "/v1/product",
-        "/v1/product/popular",
+        "/v1/product/**",
+//        "/v1/product/categories",
+//        "/v1/product/popular",
         "/v1/payments/confirm",
         "/ws-stomp", // sockjs 경로도 리스트에 포함
         "/v1/board/popular",
+
         // Swagger 경로 예외 처리
         "/swagger-ui.html", "/swagger-ui/**",
         "/v3/api-docs", "/v3/api-docs/**"

@@ -93,9 +93,9 @@ public class SecurityConfig {
             	.requestMatchers("/v1/user/mypage/**").authenticated()
             	.requestMatchers("/v1/user/seller/**").authenticated()
             	.requestMatchers("/v1/user/social/**").authenticated()
-                .requestMatchers(HttpMethod.POST, "/v1/product/create").hasAuthority("ROLE_SELLER")
-                .requestMatchers(HttpMethod.PUT, "/v1/product/update/*").hasAuthority("ROLE_SELLER")
-                .requestMatchers(HttpMethod.POST, "/v1/product/delete/*").hasAuthority("ROLE_SELLER")
+                .requestMatchers(HttpMethod.POST, "/v1/product/create").hasAnyAuthority("ROLE_SELLER", "ROLE_ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/v1/product/update/*").hasAnyAuthority("ROLE_SELLER", "ROLE_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/v1/product/delete/*").hasAnyAuthority("ROLE_SELLER", "ROLE_ADMIN")
                 .requestMatchers("/v1/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.POST, "/v1/payments/**").permitAll()	// TODO: 결제 인증 해결
                 .requestMatchers("/files/**").permitAll()	// TODO: 결제 인증 해결
