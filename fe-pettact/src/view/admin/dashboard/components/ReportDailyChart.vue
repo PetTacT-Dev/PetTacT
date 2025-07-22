@@ -13,7 +13,7 @@
       </div>
     </div>
 
-    <div class="chart-container" style="height: 400px; position: relative;">
+    <div class="chart-container" style="position: relative;">
       <Bar :data="chartData" :options="chartOptions" />
     </div>
 

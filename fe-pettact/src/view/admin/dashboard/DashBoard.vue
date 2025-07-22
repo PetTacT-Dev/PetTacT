@@ -98,6 +98,8 @@ const activeTab = ref('user')
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
+    height: 450px; /* 원하는 고정 높이로 설정 */
+  overflow-y: auto; /* 내용이 넘칠 경우 스크롤 추가 */
 }
 
 .tab-menu {

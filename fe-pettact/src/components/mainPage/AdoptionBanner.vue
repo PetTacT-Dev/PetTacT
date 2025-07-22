@@ -8,7 +8,7 @@
             :alt="pets[currentIndex].kindNm || '유기동물 이미지'" />
           <button class="nav-button nav-button-right" @click="nextPet">→</button>
         </div>
-        <div class="adoption-info">
+        <div class="adoption-info" @click="goToPetDetail(pets[currentIndex].desertionNo)">
           <h2 class="adoption-title">입양안내</h2>
           <p class="adoption-subtitle">새로운 가족을 기다리는 유기동물들의 정보를<br />간편하게 확인해보세요.</p>
           <div class="pet-info">
@@ -30,10 +30,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
 
 const pets = ref([])
 const loading = ref(true)
 const currentIndex = ref(0)
+const router = useRouter()
 
 const fetchEndingSoonPets = async () => {
   try {
@@ -56,6 +58,14 @@ const formatGender = (code) => {
     default: return '알 수 없음';
   }
 }
+
+const goToPetDetail = (desertionNo) => {
+  if (desertionNo) { // desertionNo가 존재하는지 확인
+    router.push({ name: 'abandonmentDetail', params: { desertionNo: desertionNo } });
+  } else {
+    console.warn("desertionNo가 없어 상세 페이지로 이동할 수 없습니다.");
+  }
+};
 
 const nextPet = () => {
   currentIndex.value = (currentIndex.value + 1) % pets.value.length
