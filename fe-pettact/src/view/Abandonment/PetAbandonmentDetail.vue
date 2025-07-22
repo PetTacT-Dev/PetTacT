@@ -26,10 +26,37 @@
             <span class="carousel-control-next-icon" />
           </button>
         </div>
-
+        <div class="field-group">
+          <label class="field-label">공고번호</label>
+          <p class="field-value light">{{ detail.noticeNo }}</p>
+        </div>
+        <div class="field-group">
+          <label class="field-label">구조일</label>
+          <p class="field-value light">{{ detail.noticeSdt }}</p>
+        </div>
+        <div class="field-group">
+          <label class="field-label">보호중인 보호소</label>
+          <p class="field-value light">{{ detail.careNm }}</p>
+        </div>
+        <div class="field-group">
+          <label class="field-label">연락처</label>
+          <p class="field-value light">{{ detail.careTel }}</p>
+        </div>
+        <div class="field-group">
+          <label class="field-label">발견장소</label>
+          <p class="field-value light">{{ detail.happenPlace }}</p>
+        </div>
         <div class="field-group">
           <label class="field-label">품종</label>
           <p class="field-value light">{{ detail.kindNm }}</p>
+        </div>
+        <div class="field-group">
+          <label class="field-label">나이</label>
+          <p class="field-value light">{{ detail.age }}</p>
+        </div>
+        <div class="field-group">
+          <label class="field-label">무게</label>
+          <p class="field-value light">{{ detail.weight }}</p>
         </div>
 
         <div class="field-group">
