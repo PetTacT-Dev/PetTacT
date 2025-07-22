@@ -13,7 +13,7 @@
         <!-- 본문: 이미지 + 정보 + 액션 -->
         <div class="d-flex justify-content-between align-items-start">
             <!-- 왼쪽: 이미지 -->
-            <img :src="product.imageUrl" alt="상품 이미지" style="width: 100px; height: 100px; object-fit: cover;"
+            <img :src="getImageUrl(product.imageUrl)" alt="상품 이미지" style="width: 100px; height: 100px; object-fit: cover;"
                 class="me-3 rounded" />
 
             <!-- 가운데: 상품 정보 -->
@@ -45,6 +45,13 @@ const emit = defineEmits(['deleted'])
 
 
 const formatDate = (str) => new Date(str).toLocaleDateString('ko-KR')
+
+// ✅ 이미지 URL을 완성하는 함수 추가
+const getImageUrl = (imageUrl) => {
+  if (!imageUrl) return '/default-product.png' // 기본 이미지 설정 (선택)
+  const baseUrl = 'http://localhost:8080' // 백엔드 주소에 맞게 수정
+  return imageUrl.startsWith('http') ? imageUrl : baseUrl + imageUrl
+}
 
 const goToUpdate = () => {
     router.push({ name: 'ProductUpdate', params: { id: product.productNo } })
