@@ -3,7 +3,7 @@
     <div class="list-wrapper">
       <!-- 헤더 -->
       <div class="page-header">
-        <h1>시설 목록</h1>
+        <h1>반려동물 동반입장 가능시설 목록</h1>
       </div>
 
       <!-- 필터 및 액션 섹션 -->
@@ -34,9 +34,6 @@
           <p v-if="searched" class="total-count">
             총 <strong>{{ totalElements.toLocaleString() }}</strong>건
           </p>
-          <router-link to="facility/register" class="register-btn">
-            + 시설 등록
-          </router-link>
         </div>
       </div>
 

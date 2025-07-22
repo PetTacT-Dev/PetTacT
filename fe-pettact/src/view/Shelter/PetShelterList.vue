@@ -3,14 +3,14 @@
     <div class="list-wrapper">
       <!-- 헤더 -->
       <div class="page-header">
-        <h1>쉘터 목록</h1>
+        <h1>전국 보호소 목록</h1>
       </div>
 
       <!-- 필터 및 액션 섹션 -->
       <div class="filter-section">
         <div class="filter-row">
           <div class="filter-group">
-            <label class="filter-label">시도</label>
+            <label class="filter-label">지역</label>
             <select v-model="selectedSido" class="select-field">
               <option value="">전체</option>
               <option v-for="s in sidoList" :key="s.orgCd" :value="s">
@@ -26,7 +26,7 @@
             총 <strong>{{ totalElements.toLocaleString() }}</strong>건
           </p>
           <router-link to="/shelter/register" class="register-btn">
-            + 쉘터 등록
+            + 보호소 등록
           </router-link>
         </div>
       </div>
