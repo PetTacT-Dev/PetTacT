@@ -1,7 +1,7 @@
 <template>
   <div class="mb-4">
     <div class="d-flex justify-content-between align-items-center mb-2">
-      <h5 class="mb-0">신고</h5>
+      <h5 class="mb-0">판매자 권한 대기 목록</h5>
       <div class="text-muted">
         미처리 <strong>{{ pendingCount }}</strong>건 |
         <router-link :to="{ name: 'adminSellerRequests' }">전체보기 ></router-link>
