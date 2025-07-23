@@ -25,8 +25,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(seller, index) in sellerList" :key="seller.userNo">
-                <td>{{ index + 1 }}</td>
+              <tr v-for="(seller, index) in pageData.content" :key="seller.userNo">
+                <td>{{ index + 1 + (pageData.currentPage - 1) * pageData.pageSize }}</td>
                 <td>{{ seller.userEmail }}</td>
                 <td>{{ seller.userNickname }}</td>
                 <td>{{ seller.statusCode }}</td>
@@ -41,9 +41,16 @@
           </table>
         </div>
 
-        <div v-if="sellerList.length === 0" class="text-center mt-3">
+        <div v-if="pageData.content.length === 0" class="text-center mt-3">
           승인 대기중인 요청이 없습니다.
         </div>
+
+        <Pagination
+          :totalElements="pageData.totalElements"
+          :currentPage="pageData.currentPage"
+          :pageSize="pageData.pageSize"
+          @change="fetchSellerList"
+        />
       </div>
     </div>
   </div>
@@ -53,21 +60,34 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import Pagination from '@/components/common/Pagination.vue'
 
-const sellerList = ref([])
+const router = useRouter()
 const isLoading = ref(true)
 const error = ref('')
 
-const router = useRouter()
-
-onMounted(() => {
-  fetchSellerList()
+const pageData = ref({
+  content: [],
+  totalElements: 0,
+  currentPage: 1,
+  pageSize: 10
 })
 
-const fetchSellerList = async () => {
+onMounted(() => {
+  fetchSellerList(1)
+})
+
+const fetchSellerList = async (page = 1) => {
+  isLoading.value = true
   try {
-    const res = await axios.get('/v1/admin/seller/requests')
-    sellerList.value = res.data
+    const res = await axios.get('/v1/admin/seller/requests', {
+      params: {
+        page: page,
+        size: pageData.value.pageSize
+      }
+    })
+    pageData.value = res.data
+    error.value = ''
   } catch (err) {
     console.error(err)
     error.value = '판매자 권한 요청 목록을 불러오는 데 실패했습니다.'
@@ -82,7 +102,7 @@ const approveSeller = async (userNo) => {
   try {
     await axios.patch(`/v1/admin/seller/${userNo}/approve`)
     alert('판매자 권한이 승인되었습니다.')
-    fetchSellerList()
+    fetchSellerList(pageData.value.currentPage)
   } catch (err) {
     console.error(err)
     alert(err.response?.data || '승인 처리 중 오류가 발생했습니다.')

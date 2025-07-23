@@ -1,128 +1,382 @@
 <template>
-<div class="modal-overlay" @click.self="closeChatModal">
-    <div class="modal-box">
-      <h4 v-if="!chatStore.roomNo">나의 채팅방</h4>
+  <div class="chat-app-container">
+    <!-- 왼쪽: 채팅방 목록 영역 -->
+    <div class="chat-sidebar">
+      <!-- 헤더 -->
+      <div class="sidebar-header">
+        <button @click="closeModal" class="close-btn">×</button>
+        <h4 class="header-title">채팅</h4>
+      </div>
 
-      <ul v-if="!chatStore.roomNo && chatRooms.length > 0">
-        <li
-          v-for="room in chatRooms"
-          :key="room.roomNo"
-          @click="openRoom(room.roomNo)"
-          class="chat-room-item"
-        >
-          {{ room.name }}
-        </li>
-      </ul>
-      <p v-else-if="!chatStore.roomNo">참여 중인 채팅방이 없습니다.</p>
+      <!-- 검색바 -->
+      <SearchUserModal @roomOpen="openRoom" />
 
-      <!--  채팅창 -->
-      <ChatWindow v-if="chatStore.roomNo" :roomNo="chatStore.roomNo" />
+      <!-- 채팅방 목록 -->
+      <div class="chat-rooms-container">
+        <div v-if="chatRooms.length > 0" class="chat-rooms-list">
+          <div
+            v-for="room in chatRooms"
+            :key="room.roomNo"
+            @click="openRoom(room.roomNo)"
+            :class="['chat-room-item', { active: modalStore.roomNo === room.roomNo }]"
+          >
+            <div class="room-avatar"></div>
+            <div class="room-info">
+              <div class="room-name">{{ room.name }}</div>
+              <div class="room-last-message">{{ room.lastMessage || '채팅을 시작해보세요' }}</div>
+            </div>
+            <div class="room-meta">
+              <div class="room-time">{{ formatTime(room.lastTime) }}</div>
+              <span v-if="room.unreadCount > 0" class="unread-badge">{{ room.unreadCount }}</span>
+            </div>
+          </div>
+        </div>
 
-      <!--  닉네임 검색 -->
-      <button v-if="!chatStore.roomNo" @click="showSearch = true" class="search-btn">
-        닉네임으로 채팅 신청하기
-      </button>
-      <SearchUserModal v-if="showSearch" @roomOpen="openRoom" @close="showSearch = false" />
-
-      <!--  닫기 또는 채팅 종료 -->
-      <button class="close-btn" @click="closeModal">
-        {{ chatStore.roomNo ? '채팅방 목록' : '닫기' }}
-      </button>
+        <!-- 빈 상태 -->
+        <div v-else class="empty-state">
+          <div class="empty-icon">💭</div>
+          <p>참여 중인 채팅방이 없습니다</p>
+          <p class="empty-guide">상단 검색을 통해 새로운 채팅을 시작해보세요!</p>
+        </div>
+      </div>
     </div>
+
+    <!-- 오른쪽: 채팅창 영역 -->
+    <div class="chat-main">
+      <ChatRoom :key="modalStore.roomNo" v-if="modalStore.roomNo" :roomNo="modalStore.roomNo" />
+      <div v-else class="welcome-screen">
+        <div class="welcome-content">
+          <h3>대화를 시작해보세요! 👋</h3>
+          <p>왼쪽에서 채팅방을 선택하거나 검색을 통해 새로운 대화를 시작하세요.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 기존 검색 모달 (필요시) -->
+    <SearchUserModal
+      v-if="showSearch"
+      @roomOpen="openRoom"
+      @close="showSearch = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-//import axios from '@/js/axios';
-//import { useChatStore } from '@/js/pinia';
+import axios from 'axios';
+import { useModalStore } from '@/js/modalStore';
+import ChatRoom from './ChatRoom.vue';
 import SearchUserModal from './SearchUserModal.vue';
-import ChatWindow from './ChatRoom.vue';
 
-const showSearch = ref(false);
+const modalStore = useModalStore();
 const chatRooms = ref([]);
-const chatStore = useChatStore();
-const emit = defineEmits(['close']); 
+const showSearch = ref(false);
+const emit = defineEmits(['close']);
 
 onMounted(() => {
-  axios.get('/chat/room/my').then(res => {
-    chatRooms.value = res.data;
-  });
+  fetchChatRooms();
 });
 
-function openRoom(roomNo) {
-  chatStore.roomNo = roomNo;
-  showSearch.value = false;
-}
-
-function closeModal() {
-  chatStore.reset(); 
-
-  axios.get('/chat/room/my')
+function fetchChatRooms() {
+  axios.get('/v1/chat/room/my')
     .then(res => {
       chatRooms.value = res.data;
     })
     .catch(err => {
-      console.error('채팅방 목록 재조회 실패:', err);
+      console.error('채팅방 목록 조회 실패:', err);
     });
+}
 
-  emit('close'); 
+function openRoom(roomNo) {
+  setTimeout(() => {
+    modalStore.roomNo = roomNo;
+  }, 0);
+  showSearch.value = false;
+}
+
+function closeModal() {
+  if (modalStore.roomNo) {
+    modalStore.resetChat();
+    modalStore.roomNo = null;
+  } else {
+    modalStore.closeMessageModal();
+    emit('close');
+  }
+  fetchChatRooms();
+}
+
+function formatTime(timestamp) {
+  if (!timestamp) return '';
+
+  const now = new Date();
+  const date = new Date(timestamp);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  if (messageDate.getTime() === today.getTime()) {
+    return `오후 ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+  } else {
+    return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+  }
 }
 </script>
 <style scoped>
-.modal-overlay {
+/* 전체 채팅 앱 컨테이너 */
+.chat-app-container {
   position: fixed;
   top: 0;
-  left: 0;
-  width: 100vw;
+  right: 0;
+  width: 50vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  background: #ffffff;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
   z-index: 1000;
 }
 
-.modal-box {
-  background-color: black;
-  padding: 24px;
-  width: 400px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+/* 왼쪽 사이드바 */
+.chat-sidebar {
+  width: 50%;
+  background: #f8f9fa;
+  border-right: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
 }
 
-.modal-box h4,
-.modal-box h5 {
-  margin-bottom: 16px;
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
+/* 사이드바 헤더 */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #6c757d;
+  margin-right: 12px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #f1f5f9;
+  color: #2d3748;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+/* 채팅방 컨테이너 */
+.chat-rooms-container {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* 채팅방 목록 */
+.chat-rooms-list {
+  padding: 0;
 }
 
 .chat-room-item {
-  padding: 10px;
-  margin-bottom: 8px;
-  background-color: black;
-  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
   cursor: pointer;
-  transition: background 0.2s ease;
-}
-.chat-room-item:hover {
-  background-color: #eaeaea;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
 }
 
-.search-btn, .close-btn {
-  margin-top: 12px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  background-color: #4caf50;
-  color: white;
-  cursor: pointer;
-  font-weight: bold;
+.chat-room-item:hover {
+  background: #f8fafe;
 }
-.search-btn:hover,
-.close-btn:hover {
-  background-color: #43a047;
+
+.chat-room-item.active {
+  background: #e8f4fd;
+  border-right: 3px solid #008BE6;
+}
+
+.room-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.room-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.room-info {
+  flex: 1;
+  min-width: 0;
+  margin-right: 8px;
+}
+
+.room-name {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 4px;
+  font-size: 15px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.room-last-message {
+  color: #6c757d;
+  font-size: 13px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.room-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.room-time {
+  color: #a0aec0;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.unread-badge {
+  background: #ef4444;
+  color: white;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* 빈 상태 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.empty-state p {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.empty-guide {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: #a0aec0;
+}
+
+/* 오른쪽 메인 영역 */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+}
+
+/* 환영 화면 */
+.welcome-screen {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafbfc;
+}
+
+.welcome-content {
+  text-align: center;
+  color: #6c757d;
+  max-width: 300px;
+}
+
+.welcome-content h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.3rem;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.welcome-content p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 스크롤바 스타일링 */
+.chat-rooms-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-rooms-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-rooms-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.chat-rooms-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1024px) {
+  .chat-app-container {
+    width: 60vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-app-container {
+    width: 100vw;
+  }
+  
+  .chat-sidebar {
+    width: 100%;
+  }
+  
+  .chat-main {
+    display: none;
+  }
 }
 </style>

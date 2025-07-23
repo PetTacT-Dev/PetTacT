@@ -12,7 +12,7 @@ const router = useRouter();
 const route = useRoute();
 const userStore = useUserStore();
 
-onMounted(() => {
+onMounted(async () => {
   const accessToken = route.query.accessToken;
   const refreshToken = route.query.refreshToken;
 
@@ -23,7 +23,7 @@ onMounted(() => {
     const decoded = jwtDecode(accessToken);
     
     userStore.accessToken = accessToken;
-    userStore.restoreUserFromToken();
+    await userStore.fetchUser();
 
     if (decoded.userStatus === 'STATUS_SOCIAL_PENDING') {
       router.push({ name: 'socialJoin' });

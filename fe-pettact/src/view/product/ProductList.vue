@@ -1,5 +1,6 @@
 <template>
   <div class="container py-4 text-white">
+    <div class="product-wrapper">
 
     <!-- ✅ 슬라이드 배너 -->
     <div id="productBannerCarousel" class="carousel slide mb-4" data-bs-ride="carousel" data-bs-interval="3000">
@@ -20,14 +21,14 @@
       
     </div>
 
-    <h1>상품 목록</h1>
+    <h1 class="text-black">상품 목록</h1>
     <div class="mb-3">
       <!-- 상품 등록 버튼 (SELLER만 노출) -->
-      <button v-if="userStore.user?.userRole === 'ROLE_SELLER' || userStore.user?.userRole === 'ROLE_ADMIN'" @click="goToCreateProduct" class="btn btn-secondary me-2">상품 등록</button>
+      <button v-if="userStore.user?.userRole === 'ROLE_SELLER' || userStore.user?.userRole === 'ROLE_ADMIN'" @click="goToCreateProduct" class="btn-custom me-2">상품 등록</button>
       <!-- 장바구니 버튼 (로그인한 사용자만 노출) -->
-      <button v-if="userStore.user" @click="goToCart" class="btn btn-secondary me-2">장바구니</button>
+      <button v-if="userStore.user" @click="goToCart" class="btn-custom me-2">장바구니</button>
       <!-- 주문 내역 버튼 (로그인한 사용자만 노출) -->
-      <button v-if="userStore.user" @click="goToOrderList" class="btn btn-secondary">주문 내역</button>
+      <button v-if="userStore.user" @click="goToOrderList" class="btn-custom me-2">주문 내역</button>
     </div>
     <div class="mb-3 d-flex">
         <select v-model="selectedCategory" class="form-select me-2">
@@ -41,8 +42,8 @@
         placeholder="상품명을 입력하세요" 
         @keyup.enter="searchProducts"
       />
-      <button class="btn btn-outline-light me-2" @click="searchProducts">검색</button>
-      <button class="btn btn-outline-light" @click="resetSearch">초기화</button>
+      <button class="btn-outline-custom me-2" @click="searchProducts">검색</button>
+      <button class="btn-outline-custom me-2" @click="resetSearch">초기화</button>
     </div>
       <div class="mb-4">
         <select v-model="sortOption" @change="searchProducts" class="form-select" style="max-width: 200px;">
@@ -107,6 +108,7 @@
     <div v-else>
       상품이 없습니다.
     </div>
+    </div>
   </div>
 </template>
 
@@ -116,8 +118,8 @@ import { ref, onMounted, computed } from 'vue'
 import { useProductStore } from '@/stores/product'
 import { useUserStore } from '@/stores/user'
 
-// import banner1 from '@/assets/반려동물 용품1.jpg'
-// import banner2 from '@/assets/반려동물 용품3.jpg'
+//import banner1 from '@/assets/반려동물 용품1.jpg'//
+//import banner2 from '@/assets/반려동물 용품3.jpg'
 
 const productStore = useProductStore()
 const router = useRouter()
@@ -183,19 +185,11 @@ const goToCart = () => {
   router.push({ name: 'Cart' })
 }
 
-onMounted(() => {
+onMounted(async () => {
 
-    // userStore.user가 없거나 userRole이 없으면 임시로 할당 (테스트용) - 백엔드 수정 후 삭제 예정 아직 토큰 값에 권한 X 
-    if (!userStore.user || !userStore.user.userRole) {
-      userStore.user = {
-        ...userStore.user, // 기존 데이터가 있으면 유지
-        userRole: 'ROLE_NORMAL', // 원하는 임시 권한 넣기 (ROLE_ADMIN , ROLE_NORMAL 등)
-        userEmail: 'test@example.com',
-        userNickname: '테스트유저',
-        userNo: 999
-      };
-      console.log('임시로 userStore.user.userRole 할당:', userStore.user.userRole);
-    }
+    await userStore.fetchUser();  // ✅ 정상 작동
+    console.log('가져온 유저 정보:', userStore.user);
+
     productStore.fetchCategories();
 
     const page = parseInt(route.query.page) || 0;
@@ -214,4 +208,95 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Paytone+One&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css');
+
+.product-wrapper {
+  max-width: 1000px; /* ✅ 적절한 최대 너비 (원하면 1000px로도 가능) */
+  margin: 0 auto;
+}
+
+/* 위에서 제공한 스타일 복붙 */
+
+.btn-custom {
+  background-color: #008BE6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-custom:hover {
+  background-color: #0074c7;
+}
+
+.btn-outline-custom {
+  background-color: transparent;
+  border: 2px solid #008BE6;
+  color: #008BE6;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  border-radius: 8px;
+  padding: 8px 16px;
+}
+
+.btn-outline-custom:hover {
+  background-color: #008BE6;
+  color: white;
+}
+
+.form-select,
+.form-control {
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.form-select:focus,
+.form-control:focus {
+  border-color: #008BE6;
+  box-shadow: 0 0 0 0.2rem rgba(0, 139, 230, 0.25);
+}
+
+.card {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  font-family: 'Pretendard', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.pagination .page-link {
+  color: #008BE6;
+  font-family: 'Pretendard', sans-serif;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  transition: background-color 0.2s;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #008BE6;
+  border-color: #008BE6;
+  color: white;
+}
+
+.pagination .page-link:hover {
+  background-color: #e6f4ff;
+  color: #0074c7;
+}
 </style>
+

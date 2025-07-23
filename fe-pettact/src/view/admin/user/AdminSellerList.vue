@@ -17,7 +17,7 @@
             </select>
           </div>
           <div class="col-md-2 d-grid">
-            <button type="button" class="btn btn-primary" @click="getSellerList">검색</button>
+            <button type="button" class="btn btn-primary" @click="onSearch">검색</button>
           </div>
         </form>
       </div>
@@ -38,7 +38,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(user, index) in userList" :key="user.userNo">
+          <tr v-for="(user, index) in pageData.content" :key="user.userNo">
             <td>{{ index + 1 }}</td>
             <td>{{ user.userName }}</td>
             <td>{{ user.userNickname }}</td>
@@ -53,6 +53,13 @@
         </tbody>
       </table>
     </div>
+
+    <Pagination
+      :totalElements="pageData.totalElements"
+      :currentPage="pageData.currentPage"
+      :pageSize="pageData.pageSize"
+      @change="onPageChange"
+    />
   </div>
 </template>
 
@@ -60,8 +67,8 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import Pagination from '@/components/common/Pagination.vue'
 
-const userList = ref([])
 const router = useRouter()
 
 const filters = ref({
@@ -70,17 +77,25 @@ const filters = ref({
 })
 
 const statusOptions = ref([])
-const roleOptions = ref([])
 
-const getSellerList = async () => {
+const pageData = ref({
+  content: [],
+  totalElements: 0,
+  currentPage: 1,
+  pageSize: 10
+})
+
+const getSellerList = async (page = 1) => {
   try {
     const res = await axios.get('/v1/admin/seller', {
       params: {
         keyword: filters.value.keyword,
-        status: filters.value.status
+        status: filters.value.status,
+        page: page,
+        size: pageData.value.pageSize
       }
     })
-    userList.value = res.data
+    pageData.value = res.data
   } catch (err) {
     console.error(err)
   }
@@ -89,10 +104,18 @@ const getSellerList = async () => {
 const getFilterOptions = async () => {
   try {
     const res = await axios.get('/v1/admin/user/list/filters')
-    roleOptions.value = res.data.roleOptions
+    statusOptions.value = res.data.statusOptions
   } catch (err) {
     console.error(err)
   }
+}
+
+const onSearch = () => {
+  getSellerList(1)
+}
+
+const onPageChange = (page) => {
+  getSellerList(page)
 }
 
 const formatDateTime = (dateTimeStr) => {

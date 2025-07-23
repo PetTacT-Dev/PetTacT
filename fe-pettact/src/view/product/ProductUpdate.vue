@@ -1,98 +1,100 @@
 <template>
-  <div v-if="form" class="container py-4 text-white">
+  <div v-if="form" class="container py-4">
     <h2 class="mb-4 text-center">상품 수정</h2>
-    <form @submit.prevent="submitForm" class="row g-3">
-      
-      <!-- 기존 이미지 리스트 -->
-      <div v-if="form.imageUrls && form.imageUrls.length" class="col-12">
-        <h5>기존 이미지</h5>
-        <div class="d-flex flex-wrap gap-3">
-          <div 
-            v-for="(url, idx) in form.imageUrls" 
-            :key="idx" 
-            class="position-relative"
-            style="width: 150px; height: 150px;"
-          >
-            <img 
-              :src="getImageUrl(url)" 
-              alt="상품 이미지" 
-              class="img-fluid rounded"
-              style="width: 100%; height: 100%; object-fit: cover;"
-            />
-            <button
-              type="button"
-              @click="removeExistingImage(idx)"
-              class="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle"
-              style="width: 28px; height: 28px; line-height: 1; font-size: 20px;"
-              aria-label="이미지 삭제"
+
+    <!-- form wrapper 추가 -->
+    <div class="product-edit-wrapper">
+      <form @submit.prevent="submitForm" class="row g-3">
+
+        <!-- 기존 이미지 리스트 -->
+        <div v-if="form.imageUrls && form.imageUrls.length" class="col-12">
+          <h5>기존 이미지</h5>
+          <div class="d-flex flex-wrap gap-3">
+            <div
+              v-for="(url, idx) in form.imageUrls"
+              :key="idx"
+              class="position-relative product-image-wrapper"
             >
-              &times;
-            </button>
+              <img
+                :src="getImageUrl(url)"
+                alt="상품 이미지"
+                class="img-fluid rounded product-image"
+              />
+              <button
+                type="button"
+                @click="removeExistingImage(idx)"
+                class="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle btn-delete-image"
+                aria-label="이미지 삭제"
+              >
+                &times;
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- 새로 선택한 파일 리스트 -->
-      <div v-if="selectedFiles.length" class="col-12">
-        <h5>새로 추가할 이미지</h5>
-        <ul>
-          <li v-for="(file, idx) in selectedFiles" :key="idx">{{ file.name }}</li>
-        </ul>
-        <button type="button" @click="clearSelectedFiles" class="btn btn-secondary btn-sm">선택 취소</button>
-      </div>
+        <!-- 새로 선택한 파일 리스트 -->
+        <div v-if="selectedFiles.length" class="col-12">
+          <h5>새로 추가할 이미지</h5>
+          <ul>
+            <li v-for="(file, idx) in selectedFiles" :key="idx">{{ file.name }}</li>
+          </ul>
+          <button type="button" @click="clearSelectedFiles" class="btn btn-secondary btn-sm">선택 취소</button>
+        </div>
 
-      <div class="col-md-6">
-        <label for="productName" class="form-label">상품명</label>
-        <input id="productName" v-model="form.productName" required class="form-control" />
-      </div>
+        <div class="col-md-6">
+          <label for="productName" class="form-label">상품명</label>
+          <input id="productName" v-model="form.productName" required class="form-control" />
+        </div>
 
-      <div class="col-md-3">
-        <label for="productPrice" class="form-label">가격</label>
-        <input id="productPrice" v-model.number="form.productPrice" type="number" min="1" required class="form-control" />
-      </div>
+        <div class="col-md-3">
+          <label for="productPrice" class="form-label">가격</label>
+          <input id="productPrice" v-model.number="form.productPrice" type="number" min="1" required class="form-control" />
+        </div>
 
-      <div class="col-md-3">
-        <label for="productStock" class="form-label">수량</label>
-        <input id="productStock" v-model.number="form.productStock" type="number" min="0" required class="form-control" />
-      </div>
+        <div class="col-md-3">
+          <label for="productStock" class="form-label">수량</label>
+          <input id="productStock" v-model.number="form.productStock" type="number" min="0" required class="form-control" />
+        </div>
 
-      <!-- 카테고리 -->
-      <div class="col-md-6">
-        <label for="categoryNo" class="form-label">카테고리</label>
-        <select id="categoryNo" v-model.number="form.categoryNo" class="form-select" required>
-          <option 
-            v-for="category in categories" 
-            :key="category.categoryNo" 
-            :value="category.categoryNo"
+        <!-- 카테고리 -->
+        <div class="col-md-6">
+          <label for="categoryNo" class="form-label">카테고리</label>
+          <select id="categoryNo" v-model.number="form.categoryNo" class="form-select" required>
+            <option
+              v-for="category in categories"
+              :key="category.categoryNo"
+              :value="category.categoryNo"
+            >
+              {{ category.categoryName }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label for="productDescription" class="form-label">설명</label>
+          <textarea id="productDescription" v-model="form.productDescription" required class="form-control" rows="4"></textarea>
+        </div>
+
+        <div class="col-12">
+          <label for="files" class="form-label">첨부파일</label>
+          <input id="files" ref="fileInputRef" type="file" @change="handleFileChange" multiple class="form-control" />
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+          <!-- 수정 버튼: 셀러이면서 본인 글인 경우만 표시 -->
+          <button
+            v-if="isSeller && isOwner"
+            type="submit"
+            :disabled="isLoading"
+            class="btn btn-secondary"
           >
-            {{ category.categoryName }}
-          </option>
-        </select>
-      </div>
+            {{ isLoading ? '수정 중...' : '수정하기' }}
+          </button>
+          <button @click="goToList" type="button" class="btn btn-secondary">상품 목록</button>
+        </div>
 
-      <div class="col-12">
-        <label for="productDescription" class="form-label">설명</label>
-        <textarea id="productDescription" v-model="form.productDescription" required class="form-control" rows="4"></textarea>
-      </div>
-
-      <div class="col-12">
-        <label for="files" class="form-label">첨부파일</label>
-        <input id="files" ref="fileInputRef" type="file" @change="handleFileChange" multiple class="form-control" />
-      </div>
-
-      <div class="col-12 d-flex gap-2">
-        <!-- ✅ 수정 버튼: 셀러이면서 본인 글인 경우만 표시 -->
-        <button
-          v-if="isSeller && isOwner"
-          type="submit"
-          :disabled="isLoading"
-          class="btn btn-secondary"
-        >
-          {{ isLoading ? '수정 중...' : '수정하기' }}
-        </button>
-        <button @click="goToList" type="button" class="btn btn-secondary">상품 목록</button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
 
   <div v-else class="container py-4 text-center">
@@ -104,7 +106,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProductStore } from '@/stores/product';
-//import { useFileStore } from '@/stores/file';
+import { useFileStore } from '@/stores/file';
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute();
@@ -257,17 +259,102 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.product-images {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
+
+
+@import url('https://fonts.googleapis.com/css2?family=Paytone+One&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css');
+
+.container {
+  font-family: 'Pretendard', sans-serif;
+  color: #333;
 }
 
-.product-image {
-  width: 200px;
-  height: 200px;
-  object-fit: cover;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+/* 중앙 정렬 및 max-width 제한 */
+form {
+  max-width: 1000px;
+  margin: 0 auto;
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
+
+/* 제목 정렬 */
+h2 {
+  font-weight: bold;
+  font-family: 'Pretendard', sans-serif;
+  color: #222;
+}
+
+/* 라벨 */
+.form-label {
+  font-weight: 500;
+  color: #444;
+}
+
+/* 인풋/셀렉트/텍스트에어리어 */
+.form-control,
+.form-select {
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+/* 버튼 스타일 통일 */
+.btn-secondary {
+  background-color: #008BE6;
+  border: none;
+  color: white;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: #0074c7;
+}
+
+/* 기존 이미지 썸네일 */
+.position-relative img {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* 이미지 삭제 버튼 */
+.position-absolute.btn-danger {
+  background-color: #dc3545;
+  border: none;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 0;
+}
+
+/* 새로 추가한 이미지 목록 */
+ul {
+  padding-left: 1rem;
+}
+
+li {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+  form {
+    padding: 16px;
+  }
+
+  .form-label {
+    font-size: 14px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+}
+
 </style>
